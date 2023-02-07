@@ -1,0 +1,21 @@
+var slider = document.getElementById("speedRange");
+    var output = document.getElementById("speed");
+    output.innerHTML = slider.value;
+
+    slider.oninput = function() {
+      output.innerHTML = this.value; 
+    }
+    slider.onmouseup = function() { 
+      sendSlider(this.id, this.value);
+    }
+
+    var slider2 = document.getElementById("distanceRange");
+    var output2 = document.getElementById("distance");
+    output2.innerHTML = slider2.value;
+
+    slider2.oninput = function() {
+      output2.innerHTML = this.value; 
+    }
+    slider2.onmouseup = function() { 
+      sendSlider(this.id, this.value);
+    }
