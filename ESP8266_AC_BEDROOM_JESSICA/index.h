@@ -1,0 +1,239 @@
+const char MAIN_page[] PROGMEM = R"=====(
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name"cache-control" content="public, max-age=0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css"
+        rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css'>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+</head>
+
+<body onload="REFRESH()">
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-fluid d-flex justify-content-center">
+                <h1 style=color:blue;>
+                    <center>AC BEDROOM JESSICA</center>
+                </h1>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-xs-fluid d-flex justify-content-center">
+                <button class="btn btn-outline-primary m-1 blue" id="COOL" onclick="MainFunc('/cool', id)"> COOL </button>
+
+                <button class="btn btn-outline-warning m-1" id="HEAT" onclick="MainFunc('/heat', id)"> HEAT </button>
+                <button class="btn btn-outline-success m-1" id="FAN" onclick="MainFunc('/fan', id)"> FAN </button>
+                <button class="btn btn-outline-success m-1" id="AUTO" onclick="MainFunc('/auto', id)"> AUTO </button>
+                <button class="btn btn-outline-success m-1" id="REFRESH" onclick="REFRESH()"> REFRESH </button>
+                <button class="btn btn-outline-success m-1" id="RESET" onclick="MainFunc('/reset', id)"> RESET </button>
+                <button class="btn btn-outline-success m-1" id="DEBUG" onclick="MainFunc('/logs', id)"> DEBUG </button>
+                <button class="btn btn-outline-success m-1" id="OFF" onclick="MainFunc('/off', id)"> OFF </button>
+                <button class="btn btn-outline-success m-1" id="OFF" onclick="MainFunc('/off_ovrd', id)"> OFF (ovrd) </button>
+                <button class="btn btn-outline-success m-1" id="STOP" onclick="MainFunc('/stopAll', id)">STOP ACT</button>
+                <button class="btn btn-outline-success m-1" id="TURBO" onclick="MainFunc('/turbo', id)"> TURBO </button>            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-fluid d-flex justify-content-center">
+                <p></p>
+                <h8 style=color:red;>Set Point: <span id="temp"></span> &nbsp &nbsp </h8>
+                <div> <input type="range" min="60" max="90" value="0" class="form-range" id="tempRange"
+                        data-orientation="vertical" onmouseup="sendSlider(id, value)"> </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-fluid d-flex justify-content-center">
+                <iframe width="800" height="500" src="http://192.168.10.208/term.html" title="Serial Terminal Output"
+                    style="border:1px solid black;">
+                </iframe>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-fluid d-flex justify-content-center">
+                <h4 style=color:red;><span id="clock">00:00:00</span></h4>&nbsp&nbsp&nbsp&nbsp&nbsp
+                <h4 style=color:black;><span id="timeInfo">up time</span></h4>&nbsp&nbsp&nbsp&nbsp&nbsp
+                <h4 style=color:black;><span id="macinfo">mac address</span></h4>&nbsp&nbsp&nbsp&nbsp&nbsp
+                <h4 style=color:red;><span id="state">current state</span></h4>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://unpkg.com/jquery"></script>
+
+
+<script>
+
+    function getMac() {
+        var xhr = new XMLHttpRequest();
+        var url = "/getMac"
+        xhr.open("GET", url, true);
+        xhr.send();
+
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("macinfo").innerText = this.responseText;
+                console.log(xhr.responseText);
+            }
+        };
+    };
+
+    function getTimeInfo() {
+        var xhr = new XMLHttpRequest();
+        var url = "/getTimeInfo"
+
+        xhr.open("GET", url, true);
+        xhr.send();
+
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+
+                document.getElementById("timeInfo").innerText = this.responseText;
+                console.log(xhr.responseText);
+
+            }
+        };
+    };
+
+    var message = "";
+    var previousMessage = "";
+
+    function MainFunc(name, id) {
+        var xhr = new XMLHttpRequest();
+        var url = name;
+        xhr.open("GET", url, true);
+        xhr.send();
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("state").innerText = this.responseText;
+                console.log(xhr.responseText);
+            }
+        };
+    };
+
+    function REFRESH() {
+        var xhr = new XMLHttpRequest();
+        var url = "/refresh";
+        xhr.open("GET", url, true);
+        xhr.send();
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("state").innerText = this.responseText
+                console.log(xhr.responseText);
+            }
+        };
+    };
+
+    var slider = document.getElementById("tempRange");
+    var output = document.getElementById("temp");
+    output.innerHTML = slider.value; // update the displayed value
+
+    slider.oninput = function () {
+        output.innerHTML = this.value;
+        output.value = slider.value; // update the slider position
+        //getTempVal();
+    }
+    function getTempVal() {
+        var xhr = new XMLHttpRequest();
+        var url = "/temp";
+        xhr.open("GET", url, true);
+        xhr.send();
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("temp").innerHTML = this.responseText;
+                slider.value = this.responseText;// update the slider position
+                console.log(xhr.responseText);
+            }
+        };
+    };
+    function getState() {
+        var xhr = new XMLHttpRequest();
+        var url = "/getstate";
+        xhr.open("GET", url, true);
+        xhr.send();
+
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("state").innerHTML = this.responseText;
+
+                const data = this.responseText;
+                console.log("checkStates data:" + data);
+
+                const arr = data.split(",");
+                const newArr = []
+                arr.forEach((val) => {
+                    newArr.push(val.replace(" ", ":").split(":"))
+                })
+                const Obj = Object.fromEntries(newArr)
+                console.log("entries:" + Obj)
+                for (let a of Object.keys(Obj)) {
+                    console.log(a + ":" + Obj[a])
+                    if (a == "tempRange") {
+                        console.log("updating slider value to ", Obj[a]);
+                        $(`#${a}`).val(Obj[a]);
+                    }
+                    else {
+                        $(`#${a}`).text(Obj[a]);
+                    }
+                }
+            }
+        };
+    };
+    function getClockInfo() {
+        var xhr = new XMLHttpRequest();
+        var url = "/getClock"
+
+        xhr.open("GET", url, true);
+        xhr.send();
+
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+
+                document.getElementById("clock").innerText = this.responseText;
+                console.log(xhr.responseText);
+
+            }
+        };
+    };
+
+    function sendSlider(id, value) {
+        var xhr = new XMLHttpRequest();
+        var url = "/" + id + "=" + value;
+        xhr.open("GET", url, true);
+        xhr.send();
+    };
+
+    getMac();
+    getTimeInfo();
+    getTempVal();
+
+    var interval1 = setInterval(function () { getState(); }, 500);
+    var interval3 = setInterval(function () { getTimeInfo(); }, 10000);
+    var interval5 = setInterval(function () { getClockInfo(); }, 500);
+
+    function clearAll() {
+        clearInterval(interval1);
+        clearInterval(interval2);
+        clearInterval(interval3);
+        alert("ALL SCHEDULED TASKS CANCELED ; refresh this page to resume");
+    };
+    setTimeout(function () { clearAll(); }, 1800 * 1000); // clear all intervals after 30 minutes
+</script>
+
+</html>
+)=====";
