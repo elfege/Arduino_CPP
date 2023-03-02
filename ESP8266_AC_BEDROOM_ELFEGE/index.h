@@ -28,10 +28,11 @@ const char MAIN_page[] PROGMEM = R"=====(
                 </h1>
             </div>
         </div>
-        
+
         <div class="row">
             <div class="col-xs-fluid d-flex justify-content-center">
-                <button class="btn btn-outline-primary m-1 blue" id="COOL" onclick="MainFunc('/cool', id)"> COOL </button>
+                <button class="btn btn-outline-primary m-1 blue" id="COOL" onclick="MainFunc('/cool', id)"> COOL
+                </button>
 
                 <button class="btn btn-outline-warning m-1" id="HEAT" onclick="MainFunc('/heat', id)"> HEAT </button>
                 <button class="btn btn-outline-success m-1" id="FAN" onclick="MainFunc('/fan', id)"> FAN </button>
@@ -40,9 +41,11 @@ const char MAIN_page[] PROGMEM = R"=====(
                 <button class="btn btn-outline-success m-1" id="RESET" onclick="MainFunc('/reset', id)"> RESET </button>
                 <button class="btn btn-outline-success m-1" id="DEBUG" onclick="MainFunc('/logs', id)"> DEBUG </button>
                 <button class="btn btn-outline-success m-1" id="OFF" onclick="MainFunc('/off', id)"> OFF </button>
-                <button class="btn btn-outline-success m-1" id="OFF" onclick="MainFunc('/off_ovrd', id)"> OFF (ovrd) </button>
-                <button class="btn btn-outline-success m-1" id="STOP" onclick="MainFunc('/stopAll', id)">STOP ACT</button>
-                <button class="btn btn-outline-success m-1" id="TURBO" onclick="MainFunc('/turbo', id)"> TURBO </button>            
+                <button class="btn btn-outline-success m-1" id="OFF" onclick="MainFunc('/off_ovrd', id)"> OFF (ovrd)
+                </button>
+                <button class="btn btn-outline-success m-1" id="STOP" onclick="MainFunc('/stopAll', id)">STOP
+                    ACT</button>
+                <button class="btn btn-outline-success m-1" id="TURBO" onclick="MainFunc('/turbo', id)"> TURBO </button>
             </div>
         </div>
         <div class="row">
@@ -62,10 +65,11 @@ const char MAIN_page[] PROGMEM = R"=====(
         </div>
         <div class="row">
             <div class="col-xs-fluid d-flex justify-content-center">
-                <h4 style=color:red;><span id="clock">00:00:00</span></h4>&nbsp&nbsp&nbsp&nbsp&nbsp
-                <h4 style=color:black;><span id="timeInfo">up time</span></h4>&nbsp&nbsp&nbsp&nbsp&nbsp
-                <h4 style=color:black;><span id="macinfo">mac address</span></h4>&nbsp&nbsp&nbsp&nbsp&nbsp
-                <h4 style=color:red;><span id="state">current state</span></h4>
+                <h4 class="col-xs m-3" style=color:red;><span id="clock">00:00:00</span></h4>
+                <h4 class="col-xs m-3" style=color:black;><span id="timeInfo">up time</span></h4>
+                <h4 class="col-xs m-3" style=color:black;><span id="macinfo">mac address</span></h4>
+                <h4 class="col-xs m-3" style=color:red;><span id="state">current state</span></h4>
+                <h4 class="col-xs m-3" style=color:blue;><span id="outsideTemp">outside temp.:</span>°F</h4>
             </div>
         </div>
 
@@ -110,6 +114,24 @@ const char MAIN_page[] PROGMEM = R"=====(
             }
         };
     };
+
+    function getOutsideTemp() {
+        var xhr = new XMLHttpRequest();
+        var url = "/getOutsideTemp"
+
+        xhr.open("GET", url, true);
+        xhr.send();
+
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+
+                document.getElementById("outsideTemp").innerText = this.responseText;
+                console.log(xhr.responseText);
+
+            }
+        };
+    };
+
 
     var message = "";
     var previousMessage = "";
@@ -219,18 +241,25 @@ const char MAIN_page[] PROGMEM = R"=====(
         xhr.send();
     };
 
-    getMac();
-    getTimeInfo();
-    getTempVal();
+    jQuery(() => {
+        getMac();
+        getTimeInfo();
+        getTempVal();
+        getOutsideTemp();
+    });
 
-    var interval1 = setInterval(function () { getState(); }, 500);
-    var interval3 = setInterval(function () { getTimeInfo(); }, 10000);
-    var interval5 = setInterval(function () { getClockInfo(); }, 500);
+    const interval1 = setInterval(() => getState(), 500);
+    const interval3 = setInterval(() => getTimeInfo(), 10000);
+    const interval5 = setInterval(() => getClockInfo(), 500);
+    const interval6 = setInterval(() => getOutsideTemp(), 60000)
+
 
     function clearAll() {
         clearInterval(interval1);
         clearInterval(interval2);
         clearInterval(interval3);
+        clearInterval(interval5);
+        clearInterval(interval6);
         alert("ALL SCHEDULED TASKS CANCELED ; refresh this page to resume");
     };
     setTimeout(function () { clearAll(); }, 1800 * 1000); // clear all intervals after 30 minutes

@@ -12,32 +12,30 @@ void cool()
     currentMode = "cool";
     term.println("cool()");
 
-    /* VERY POWER HUNGRY FEATURE!!! */
-    //    irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
-    //    delay(DELAY_CMD);
-    //    irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
-    //    delay(DELAY_CMD);
-    //    irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
-    //    delay(DELAY_CMD);
+    if (outside_temperature >= 60 || outside_temperature == 0)
+    {
+      /* VERY POWER HUNGRY FEATURE!!! */
+      irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
+      delay(DELAY_CMD);
+      irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
+      delay(DELAY_CMD);
+      irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
+      delay(DELAY_CMD);
+      turbo();
 
-    indexArray = getIndex(lastSetPoint);
-    term.println("getting temp value from array of temperatures");
-    newTemp = TempArray[indexArray - 1][99];
-    term.println("sending SetTemp() command");
-    SetTemp(newTemp, "coolingSetpoint"); // don't send setpoint event if using boost setpoint
-
-    /*term.print("lastSetPoint is: "); term.println(lastSetPoint);
-      //  requiredSetpointForBoost = "62";
-      term.print("requiredSetpointForBoost is: "); term.println(requiredSetpointForBoost);
-      //  term.println("getting index value from array of indexes");
-      indexArray = getIndex(requiredSetpointForBoost);
-      //indexArray = getIndex(lastSetPoint);
+      indexArray = getIndex(lastSetPoint);
       term.println("getting temp value from array of temperatures");
       newTemp = TempArray[indexArray - 1][99];
       term.println("sending SetTemp() command");
-      SetTemp(newTemp, "");// don't send setpoint event if using boost setpoint
-      delay(DELAY_CMD);;
-    */
+      SetTemp(newTemp, "coolingSetpoint"); // don't send setpoint event if using boost setpoint
+    }
+    else
+    {
+      // if outside temperature is below 60, don't trigger the compressor, just run the fan instead.
+      term.println("Outside temperature is below 60°F, running fan instead of cooling");
+      irsend.sendRaw(FAN, sizeof(FAN) / sizeof(int), khz);
+      delay(DELAY_CMD);
+    }
 
     send_to_hub("thermostatMode cool"); // send a thermostatMode event
     send_to_hub("thermostatOperatingState cooling");
@@ -61,22 +59,32 @@ void heat()
     lastModeRequest = millis();
     currentMode = "heat";
     term.println("heat()");
-    
-     /* VERY POWER HUNGRY FEATURE!!! */
-    // irsend.sendRaw(PUREHEAT, sizeof(PUREHEAT) / sizeof(int), khz); // PUREHEAT cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
-    // delay(DELAY_CMD);
-    // irsend.sendRaw(PUREHEAT, sizeof(PUREHEAT) / sizeof(int), khz); // PUREHEAT cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
-    // delay(DELAY_CMD);
-    // irsend.sendRaw(PUREHEAT, sizeof(PUREHEAT) / sizeof(int), khz); // PUREHEAT cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
-    // delay(DELAY_CMD);
 
-    indexArray = getIndex(lastSetPoint);
-    term.println("getting temp value from array of temperatures");
-    newTemp = TempArray[indexArray - 1][99];
-    term.println("sending SetTemp() command");
-    SetTemp(newTemp, "heatingSetpoint"); // don't send setpoint event if using boost setpoint
-    
-    
+    if (outside_temperature < 60 || outside_temperature == 0)
+    {
+      /* VERY POWER HUNGRY FEATURE!!! */
+      irsend.sendRaw(PUREHEAT, sizeof(PUREHEAT) / sizeof(int), khz); // PUREHEAT cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
+      delay(DELAY_CMD);
+      irsend.sendRaw(PUREHEAT, sizeof(PUREHEAT) / sizeof(int), khz); // PUREHEAT cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
+      delay(DELAY_CMD);
+      irsend.sendRaw(PUREHEAT, sizeof(PUREHEAT) / sizeof(int), khz); // PUREHEAT cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
+      delay(DELAY_CMD);
+      turbo();
+
+      indexArray = getIndex(lastSetPoint);
+      term.println("getting temp value from array of temperatures");
+      newTemp = TempArray[indexArray - 1][99];
+      term.println("sending SetTemp() command");
+      SetTemp(newTemp, "heatingSetpoint"); // don't send setpoint event if using boost setpoint
+    }
+    else
+    {
+      // if outside temperature is above 60, don't trigger the heat pump, just run the fan instead.
+      term.println("Outside temperature is above 60°F, running fan instead of cooling");
+      irsend.sendRaw(FAN, sizeof(FAN) / sizeof(int), khz);
+      delay(DELAY_CMD);
+    }
+
     /*requiredSetpointForBoost = "85"; // this will force the AC to boost its heating operation
 
       term.print("lastSetPoint is: "); term.println(lastSetPoint);
@@ -169,36 +177,40 @@ void acON()
 
 void acOff()
 {
-  lastOperation = 0; // saveToRTC() called in serverAndHubs()
-  lastActiveMode = "off";
-
-  currentMode = "off";
-  send_to_hub("switch off");
-  send_to_hub("thermostatMode off");
-  turboIsOn = false;
-  onrequested = false;
-  ledToggled = false;
-  isOff = true;
-
-  if (millis() - offRequestMillis > fanDurationWhenOff)
+  if (lastActiveMode != "off")
   {
-    irsend.sendRaw(OFF, sizeof(OFF) / sizeof(int), khz); // works on C&H...
-    delay(DELAY_CMD);
-    irsend.sendRaw(OFF, sizeof(OFF) / sizeof(int), khz); // works on C&H...
-    delay(DELAY_CMD);
-    irsend.sendRaw(OFF, sizeof(OFF) / sizeof(int), khz); // works on C&H...
-    delay(DELAY_CMD);
-    irsend.sendRaw(OFF, sizeof(OFF) / sizeof(int), khz); // works on C&H...
-    delay(DELAY_CMD);
+    lastOperation = 0; // saveToRTC() called in serverAndHubs()
+    lastActiveMode = "off";
+
+    currentMode = "off";
+    send_to_hub("switch off");
+    send_to_hub("thermostatMode off");
+    turboIsOn = false;
+    onrequested = false;
+    ledToggled = false;
+    isOff = true;
+
+    if (millis() - offRequestMillis > fanDurationWhenOff)
+    {
+      irsend.sendRaw(OFF, sizeof(OFF) / sizeof(int), khz); // works on C&H...
+      delay(DELAY_CMD);
+      irsend.sendRaw(OFF, sizeof(OFF) / sizeof(int), khz); // works on C&H...
+      delay(DELAY_CMD);
+      irsend.sendRaw(OFF, sizeof(OFF) / sizeof(int), khz); // works on C&H...
+      delay(DELAY_CMD);
+      irsend.sendRaw(OFF, sizeof(OFF) / sizeof(int), khz); // works on C&H...
+      delay(DELAY_CMD);
+    }
+    else
+    {
+      irsend.sendRaw(FAN, sizeof(FAN) / sizeof(int), khz);
+      delay(DELAY_CMD);
+    }
   }
   else
   {
-    irsend.sendRaw(FAN, sizeof(FAN) / sizeof(int), khz);
-    delay(DELAY_CMD);
+    term.println("OFF COMMAND ALREADY SENT - SKIPPING");
   }
-
-  // irsend.sendSAMSUNG(offHex, 32);
-  // delay(2000);
 
   delay(100);
 }
@@ -277,9 +289,14 @@ void Refresh()
   term.println("This device last set point is " + (String)lastSetPoint);
   term.println("fanCirculate => " + String(fanCirculate ? "TRUE" : "FALSE"));
 
+  // lastTemperatureCheck = temperatureCheckTimerDelay;
+  // getOutdoorTemperature();
+
   if (currentMode != "off")
   {
-    send_to_hub("thermostatMode " + currentMode);
+    String currMode = currentMode;
+    currMode.toLowerCase(); // .toLowerCase() modifies the String in place, so we need apply it to a copy
+    send_to_hub("thermostatMode " + currMode);
   }
   else
   {
@@ -418,7 +435,9 @@ void fanAuto()
     delay(DELAY_CMD);
   }
 
-  send_to_hub("thermostatMode " + currentMode);
+  String currMode = currentMode;
+  currMode.toLowerCase(); // .toLowerCase() modifies the String in place, so we need apply it to a copy
+  send_to_hub("thermostatMode " + currMode);
 
   //  send_to_hub("thermostatOperatingState " + String(fanCirculate ? "fancirculate" : String(lastOperation))); fanCirculate mode not yet implemented
   send_to_hub("thermostatFanMode auto");
@@ -512,8 +531,92 @@ void send_to_hub(String var)
 void getMac()
 {
   String ip = WiFi.localIP().toString();
-  String var = "Mac: " + WiFi.macAddress() + " IP:" + ip + " " + String(WiFi.SSID());
+  String var = "Mac: " + WiFi.macAddress() + " IP:" + ip + " SSID:" + String(WiFi.SSID());
   _server.send(200, "text/html", var);
+}
+
+void getOutdoorTemperature()
+{
+  if (millis() - lastTemperatureCheck >= temperatureCheckTimerDelay)
+  {
+    term.println("********************************************");
+    term.println("          getOutdoorTemperature             ");
+    term.println("********************************************");
+    term.println(API_PATH);
+
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      WiFiClient client;
+      HTTPClient http;
+
+      String serverPath = API_PATH;
+
+      // Your Domain name with URL path or IP address with path
+      http.begin(client, serverPath.c_str());
+      // term.println("serverPath.c_str() => " + String(serverPath.c_str()));
+
+      // Send HTTP GET request
+      int httpResponseCode = http.GET();
+
+      if (httpResponseCode > 0)
+      {
+        term.print("HTTP Response code: ");
+        // term.println(httpResponseCode);
+        String payload = http.getString();
+        // term.println(payload);
+
+        // Print the entire HTTP response, including headers
+        // http.writeToStream(&Serial);
+
+        if (payload.length() > 0)
+        {
+
+          // Use the Streaming API to extract the temperature value from the JSON payload
+          DynamicJsonDocument jsonBuffer(4000);
+          DeserializationError error = deserializeJson(jsonBuffer, payload);
+          if (!error)
+          {
+            JsonObject jsonObject = jsonBuffer.as<JsonObject>();
+            JsonArray attributesArray = jsonObject["attributes"];
+            for (JsonVariant attribute : attributesArray)
+            {
+              JsonObject attributeObject = attribute.as<JsonObject>();
+              if (attributeObject["name"] == "temperature")
+              {
+                outside_temperature = attributeObject["currentValue"];
+                term.println("outside temperature is: " + String(outside_temperature) + "°F");
+                break; // Stop looping once we find the temperature value
+              }
+            }
+          }
+          else
+          {
+            term.println("---------------- ERROR ---------------" + String(error.c_str()));
+            // print the available heap memory in bytes.
+            term.println("Free heap memory: " + String(ESP.getFreeHeap()));
+          }
+        }
+        else
+        {
+          term.println("---------------- ERROR ---------------Payload is empty");
+        }
+      }
+      else
+      {
+        term.print("Error code: ");
+        term.println(httpResponseCode);
+      }
+
+      // Free resources
+      http.end();
+    }
+    else
+    {
+      term.println("WiFi Disconnected");
+    }
+
+    lastTemperatureCheck = millis();
+  }
 }
 
 void log()
@@ -650,7 +753,7 @@ void messageCallout(String message)
 
     SetTemp(newTemp, cmd);
     String var = cmd + " " + String(New); // "New" is a String while newTemp is a charArray
-    send_to_hub(var);                      // parse event
+    send_to_hub(var);                     // parse event
   }
   else if (message.equals("on"))
   {
@@ -667,7 +770,10 @@ void messageCallout(String message)
   else if (message.equals("off"))
   {
     acOff();
-    offRequestMillis = millis(); // allow fan to circulate for X minutes after turning off to prevent mold formation
+    if (currentMode != "OFF")
+    {
+      offRequestMillis = millis(); // allow fan to circulate for X minutes after turning off to prevent mold formation
+    }
   }
   else if (message.equals("refresh"))
   {

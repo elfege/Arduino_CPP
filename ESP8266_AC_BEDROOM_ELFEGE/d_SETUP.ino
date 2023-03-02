@@ -76,10 +76,11 @@ void setup()
   //*****************************************************************************
   //OTA initialization
   //*****************************************************************************
-  ArduinoOTA.onStart([]() {
+  ArduinoOTA.onStart([]() {    
+    term.println("OTA Start");
+    term.handleClient();
     tempRequest = false;
-    StopAll = true;
-    term.println("Start");
+    StopAll = true;    
   });
   ArduinoOTA.onEnd([]() {
     term.println("\nEnd");
