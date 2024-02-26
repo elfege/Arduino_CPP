@@ -96,7 +96,7 @@ void setup()
     term.println("---------------------------------------------------------------");
   }
 
-  fanIsOff = !digitalRead(FAN);
+ 
 
 }
 

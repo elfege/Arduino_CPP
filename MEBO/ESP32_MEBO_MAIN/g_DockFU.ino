@@ -24,8 +24,8 @@ void dockingFunctions()
     int turndist = 10;
     int Length = 200;
     int delsearch = 50;
-    int sPeeD = 170;
-    int startingSpeed = sPeeD;
+    int docking_speed = 170;
+    int startingSpeed = docking_speed;
     rearleft = false;
     frontright = false; // lineTest() globals
 

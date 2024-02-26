@@ -145,7 +145,8 @@ void pusherRetractCheck()
 unsigned long cosStart = millis();
 bool cosScanPulled = false;
 void cleanOpener() {
-  verticalDownStep(71, 10);
+  return ;
+  // verticalDownStep(50, 10);
   delay(510);
   canBackWard();
   unsigned long Start = millis();
@@ -169,8 +170,9 @@ void cleanOpener() {
       Start = millis();
     }
     mainHandler();
-    cosinusScan();// rubs the head against the cleaning brush
+    // cosinusScan();// rubs the head against the cleaning brush
   }
+  
   canBackWard();
   Start = millis();
   while (millis() - Start < 2500 && !stopped)
@@ -180,11 +182,12 @@ void cleanOpener() {
       Start = millis();
     }
     mainHandler();
-    cosinusScan();// rubs the head against the cleaning brush
+    // cosinusScan();// rubs the head against the cleaning brush
   }
-  stop();
-  stopped = false;
-  verticalPull();
+  simpleStop();
+  
+  // stopped = false;
+  // verticalPull();
   stopped = false;
   term.println("DONE CLEANING HEAD");
 }

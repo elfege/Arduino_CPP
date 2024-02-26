@@ -30,7 +30,6 @@ void initXMLhttp()
 
   _server.on("/refresh", Refresh);
   _server.on("/getMac", getMac);
-  _server.on("/debug", getDataDebug);
   _server.on("/getTimeInfo", TimeInfos);
   _server.on("/clear", []()
   {

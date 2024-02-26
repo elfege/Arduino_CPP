@@ -10,7 +10,7 @@ const int maxSpeedOpener = 200; //absolute max (6v motor!)
 
 /**************************** VARIABLES *****************************/
 bool stopAll = false;
-bool OTArequest = false;
+bool readyOTA = false; 
 bool wifiLostAware = false;
 bool Logs = false;
 bool pushing = false;
@@ -44,6 +44,7 @@ bool waspaused = false;
 bool canDetectedByLimitSwitchDuringLoad = false;
 
 
+
 unsigned long previousMillisBlink = millis();
 unsigned long WiFiLostMillis = millis();
 unsigned long millisLogs = millis();
@@ -53,6 +54,8 @@ unsigned long lastRefresh = 0;
 unsigned long extractionStart = 0;
 unsigned long heartbeat = 0;
 unsigned long problemMillis = 0;
+unsigned long readyOTAmillis = 0; 
+unsigned long waitingForOTAMillis = 0;
 
 unsigned long pushTime = 240000;
 
@@ -64,11 +67,12 @@ Servo SMALL_PUSHER;
 ESP32PWM pwm;
 
 int deformCorrAttempts = 0;
-
+int elapsed_OTA_ready = 0;
+int OTA_ready_timeout = 60 * 1000;
 
 int cosMax = 3000; // in ms
-int speedValCosinus = 255;
-int speedValOpener = 184; 
+int speedValCosinus = 200;
+int speedValOpener = 185; 
 
 
 

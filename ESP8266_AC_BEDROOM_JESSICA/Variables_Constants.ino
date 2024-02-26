@@ -31,6 +31,11 @@ unsigned long fanDurationWhenOff = 10 * 60 * 1000;
 unsigned long offRequestMillis = fanDurationWhenOff;
 
 
+const int temperatureCheckTimerDelay = 5 * 60 * 1000;
+unsigned long lastTemperatureCheck = temperatureCheckTimerDelay - 30000; // run getOutdoorTemperature() 30s after boot
+int outside_temperature = 0; 
+
+unsigned long dealytBtwCmds = 1000 * 60 * 3;
 
 const int DELAY_SEC_5mn = 600;
 

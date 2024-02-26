@@ -32,9 +32,11 @@ void initXMLhttp()
 
   _server.on("/auto", Auto);
   _server.on("/off", []() {
-    if (millis() - offRequestMillis > fanDurationWhenOff + 120000)
+    if (millis() - offRequestMillis > fanDurationWhenOff)
     {
-      offRequestMillis = millis();
+      if(currentMode != "OFF"){
+    offRequestMillis = millis(); // allow fan to circulate for X minutes after turning off to prevent mold formation
+    }
       acOff;
     }
     else {
@@ -44,7 +46,6 @@ void initXMLhttp()
     }
   });
   _server.on("/off_ovrd", off_override);
-
   _server.on("/ledtoggle", toggleLED);
   _server.on("/ledtogglebypass", toggleLEDbypass);
 
@@ -63,6 +64,12 @@ void initXMLhttp()
 
   _server.on("/refresh", Refresh);
   _server.on("/getMac", getMac);
+  
+  _server.on("/getOutsideTemp", [](){
+    String temp = String(outside_temperature);
+    _server.send(200, "text/html", temp);
+  });
+
   _server.on("/getTimeInfo", []()
   {
     String data = TimeInfos();

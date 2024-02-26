@@ -1,182 +1,133 @@
 
 
-void toggle() {   // state updated in loop()
+void toggle() {  // state updated in loop()
 
-  irsend.sendSAMSUNG(0xE0E040BF, 32); // TV toggle cmd
+  irsend.sendSAMSUNG(0xE0E040BF, 32);  // TV toggle cmd
   delay(DELAY_BETWEEN_COMMANDS);
 
-  if (lastRequestedState == "on")
-  {
+  if (lastRequestedState == "on") {
     unsigned long st = millis();
-    while (millis() - st < 2000)
-    {
-      loop();
+    while (millis() - st < 2000) {
+      http_handle();
     }
-    menu(); // turn on the apple TV
+    menu();  // turn on the apple TV
   }
 
   //  lastRequestedState = currentState; // let loop() update these values
-
 }
 
 
-void Select() { // center button
+void Select() {  // center button
   irsend.sendNEC(0x77E13AD6, 32);
-  delay(DELAY_BETWEEN_COMMANDS );
+  delay(DELAY_BETWEEN_COMMANDS);
   //appleTvMainMenu();
 }
-void appleTvOff()
-{
+void appleTvOff() {
   // long press on play = standby
   int del = 1;
   appleTvMainMenu();
   delay(1000);
 
-  irsend.sendNEC(0x77E1FAD6, 32); // play button cmd
+  irsend.sendNEC(0x77E1FAD6, 32);  // play button cmd
   delay(170);
   unsigned long Start = millis();
-  while (millis() - Start < 6000) //hold for 5 seconds (3rd gen apple tv only, no way with 4th!)
+  while (millis() - Start < 6000)  //hold for 5 seconds (3rd gen apple tv only, no way with 4th!)
   {
-    irsend.sendRaw(rawZeroBit, 3, khz);// emulates holding the button 
+    irsend.sendRaw(rawZeroBit, 3, khz);  // emulates holding the button
     delay(del);
   }
 }
 
-void appletvplaypause()
-{
-  irsend.sendNEC(0x77E1FAD6, 32); // play button cmd
+void appletvplaypause() {
+  irsend.sendNEC(0x77E1FAD6, 32);  // play button cmd
 }
-void appleTvMainMenu()
-{
+void appleTvMainMenu() {
   int del = 100;
-  irsend.sendNEC(0x77E1C0D6, 32); // menu button cmd
+  irsend.sendNEC(0x77E1C0D6, 32);  // menu button cmd
   delay(170);
   unsigned long Start = millis();
-  while (millis() - Start < 6000) //hold for 5 seconds (3rd gen apple tv only, no way with 4th!)
+  while (millis() - Start < 6000)  //hold for 5 seconds (3rd gen apple tv only, no way with 4th!)
   {
-    irsend.sendRaw(rawZeroBit, 3, khz);// emulate holding the button
+    irsend.sendRaw(rawZeroBit, 3, khz);  // emulate holding the button
     delay(del);
   }
 }
-void menu()
-{
-  irsend.sendNEC(0x77E1C0D6, 32); // menu button cmd
-  delay(DELAY_BETWEEN_COMMANDS );
+void menu() {
+  irsend.sendNEC(0x77E1C0D6, 32);  // menu button cmd
+  delay(DELAY_BETWEEN_COMMANDS);
 }
-void up()
-{
+void up() {
   irsend.sendNEC(0x77E150A8, 32);
-  delay(DELAY_BETWEEN_COMMANDS );
+  delay(DELAY_BETWEEN_COMMANDS);
 }
-void down()
-{
+void down() {
   irsend.sendNEC(0x77E130A8, 32);
-  delay(DELAY_BETWEEN_COMMANDS );
+  delay(DELAY_BETWEEN_COMMANDS);
 }
-void left()
-{
+void left() {
   irsend.sendNEC(0x77E190A8, 32);
-  delay(DELAY_BETWEEN_COMMANDS );
+  delay(DELAY_BETWEEN_COMMANDS);
 }
-void right()
-{
+void right() {
   irsend.sendNEC(0x77E160A8, 32);
-  delay(DELAY_BETWEEN_COMMANDS );
+  delay(DELAY_BETWEEN_COMMANDS);
 }
-void getPowerState()
-{
-  lastRequestedState = tvIsOn() ? "off" : "on"; // if on, then it's an off request and reciprocally This var allows to turn on Apple TV by calling menu()
+void getPowerState() {
+  lastRequestedState = tvIsOn() ? "off" : "on";  // if on, then it's an off request and reciprocally This var allows to turn on Apple TV by calling menu()
   toggle();
   delay(2000);
   String state = tvIsOn() ? "TV IS ON" : "TV IS OFF";
-  
+
   _server.send(200, "text/plain", state);
 }
-void getPowerStateOnly()
-{
+void getPowerStateOnly() {
   String state = tvIsOn() ? "TV IS ON" : "TV IS OFF";
   _server.send(200, "text/plain", state);
 }
 
-boolean tvIsOn()
-{
-  if (analogRead(Asensor) > 500)
-  {
-    return true;
+boolean tvIsOn() {
+  int read = analogRead(Asensor);
+  if (millis() - lastCurrentLogMilli >= 500) {
+    term.println("usb current sensor: " + String(read));
+    lastCurrentLogMilli = millis();
   }
-  else
-  {
-    return false;
-  }
+  return read >= 1024;
 }
 
-void ircmd(uint32_t * val) {
+void ircmd(uint32_t* val) {
 
   irsend.sendRaw(val, 99, khz);
 
   //delay(1000);
   // don't send any event from here
-
 }
 
 void Refresh() {
 
   String var = "error";
-
-
-  if (tvIsOn())
-  {
+  if (tvIsOn()) {
     var = "switch on";
     lastRequestedState = "on";
-    debugData.concat("The switch returns on" + "\n"); // build the debug data string
-  }
-  else
-  {
+  } else {
     var = "switch off";
     lastRequestedState = "off";
-    debugData.concat("The switch returns off" + "\n"); // build the debug data string
   }
-  buildDebug(var);
-
+  sendData(var);
 }
 
-
-void buildDebug(String var)
-{
-  Serial.println("var = "+var);
-  smartthing.send(var); // send the current value to smartthings
-}
-
-void getDataDebug() // called by JS
-{
-  // send last updated value in getDebug()
-
-
-  Serial.println("sending debug data to XMLHTML web client");
-  _server.send(200, "text/html", debugData);
-
-  if (debugData.length() > 2000)
-  {
-    debugData = "";
-    logs = false; // stop sensor logs
-    buildDebug("DATA RESET");
-  }
-}
-void getMac()
-{
+void getMac() {
   String ip = WiFi.localIP().toString();
   String var = "Mac: " + WiFi.macAddress() + " IP:" + ip + " " + String(WiFi.SSID());
   _server.send(200, "text/html", var);
 }
 
 
-void log()
-{
+void log() {
 
   String debug1 = "";
   String debug2 = "";
-  buildDebug(debug1);
-  buildDebug(debug2);
+  sendData(debug1);
+  sendData(debug2);
 }
 
 //*****************************************************************************
@@ -185,8 +136,7 @@ void log()
 //*****************************************************************************
 
 
-void messageCallout(String message)
-{
+void messageCallout(String message) {
 
 
   if (message.equals("on")) {
@@ -195,46 +145,30 @@ void messageCallout(String message)
       toggle();
       Select();
     }
-  }
-  else if (message.equals("off")) {
+  } else if (message.equals("off")) {
     lastRequestedState = "off";
     if (tvIsOn()) {
       toggle();
       //appleTvOff();
     }
-  }
-  else if (message.equals("appletvplaypause"))
-  {
+  } else if (message.equals("appletvplaypause")) {
     appletvplaypause();
-  }
-  else if (message.equals("up"))
-  {
+  } else if (message.equals("up")) {
     up();
-  }
-  else if (message.equals("down"))
-  {
+  } else if (message.equals("down")) {
     down();
-  }
-  else if (message.equals("left"))
-  {
+  } else if (message.equals("left")) {
     left();
-  }
-  else if (message.equals("left"))
-  {
+  } else if (message.equals("left")) {
     left();
-  }
-  else if (message.equals("menu"))
-  {
+  } else if (message.equals("menu")) {
     menu();
-  }
-  else if (message.equals("mainmenu"))
-  {
+  } else if (message.equals("mainmenu")) {
     appleTvMainMenu();
   }
 
-  buildDebug("received message " + message);
+  sendData("received message " + message);
   Refresh();
-
 }
 
 void Blink(int times, int lapse) {
@@ -249,25 +183,23 @@ void Blink(int times, int lapse) {
 }
 
 void glow() {
-  int s = 1024; //ESP8266 uses 10-bit resolution for PWM generation
+  int s = 1024;  //ESP8266 uses 10-bit resolution for PWM generation
 
   if (glw >= s) {
     goUp = false;
-  }
-  else if (glw < 1) {
+  } else if (glw < 1) {
     goUp = true;
   }
 
   if (goUp && glw < s) {
     glw++;
     analogWrite(LED, glw);
-    //Serial.print("GLOW "); Serial.println(i);
+    //Serial.print("GLOW "); term.println(i);
 
-  }
-  else if (!goUp && glw > 0) {
+  } else if (!goUp && glw > 0) {
     glw--;
     analogWrite(LED, glw);
-    //Serial.print("GLOW "); Serial.println(i);
+    //Serial.print("GLOW "); term.println(i);
   }
   //  delay(5); // delay must be set in the scope where it's called from
 }
@@ -275,18 +207,17 @@ void glow() {
 
 void Reset() {
 
-  buildDebug("RESET_CMD RECEIVED!");
+  sendData("RESET_CMD RECEIVED!");
   unsigned long stt = millis();
-  while (millis() - stt < 1000) // give it time to send the debug message
+  while (millis() - stt < 1000)  // give it time to send the debug message
   {
     loop();
   }
-  ESP.reset(); // ESP.reset is hard reset
+  ESP.reset();  // ESP.reset is hard reset
 }
 
 
-String TimeInfos()
-{
+String TimeInfos() {
   unsigned long totalTimeSeconds = millis() / 1000;
   unsigned long totalTimeMinutes = millis() / 1000 / 60;
   unsigned long TotalTimeHours = millis() / 1000 / 60 / 60;
@@ -298,50 +229,44 @@ String TimeInfos()
   unsigned long dispalyDays = TotalTimeDays;
 
 
-  Serial.println("LOOP time = " + String(elapsed) + "ms");
+  term.println("LOOP time = " + String(elapsed) + "ms");
   String result = "Time since last boot: ";
 
-  if (dispalyDays == 1)
-  {
+  if (dispalyDays == 1) {
     result = result + dispalyDays + " day";
     Serial.print(result);
-  }
-  else if (dispalyDays > 1)
-  {
+  } else if (dispalyDays > 1) {
     result = result + dispalyDays + " days";
     Serial.print(result);
   }
-  if (displayHours == 1)
-  {
+  if (displayHours == 1) {
     result = result + displayHours + " hour ";
     Serial.print(result);
-  }
-  else if (displayHours > 1)
-  {
+  } else if (displayHours > 1) {
     result = result + displayHours + " hours ";
     Serial.print(result);
   }
-  if (displayMinutes == 1)
-  {
+  if (displayMinutes == 1) {
     result = result + displayMinutes + " minute ";
     Serial.print(result);
-  }
-  else if (displayMinutes > 1)
-  {
+  } else if (displayMinutes > 1) {
     result = result + displayMinutes + " minutes ";
     Serial.print(result);
   }
-  if (displaySeconds == 1)
-  {
+  if (displaySeconds == 1) {
     result = result + displaySeconds + " second ";
     Serial.print(result);
-  }
-  else if (displaySeconds > 1)
-  {
+  } else if (displaySeconds > 1) {
     result = result + displaySeconds + " seconds ";
     Serial.print(result);
   }
 
   _server.send(200, "text/html", result);
   return result;
+}
+
+void sendData(String var) {
+  term.println("var = " + var);
+  smartthing.send(var);  // send the current value to smartthings
+  _server.send(200, "text/html", var);
 }

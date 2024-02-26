@@ -3,11 +3,11 @@
 //******************************************************************************************
 String str_ssid     = "WIFI_SSID";                           //  <---You must edit this line!
 String str_password = "WIFI_PASSWORDGahsh4479#$";                   //  <---You must edit this line!
-String str_ssid2     = "WIFI_SSID2";                           //  <---You must edit this line!
+String str_ssid2     = "WIFI_SSID";                           //  <---You must edit this line!
 IPAddress ip(192, 168, 10, 210);       // Device IP Address      //  <---You must edit this line!
 IPAddress gateway(192, 168, 10, 1);    //router gateway          //  <---You must edit this line!
 IPAddress subnet(255, 255, 255, 0);   //LAN subnet mask         //  <---You must edit this line!
-IPAddress dnsserver(192, 168, 10, 1);  //DNS server              //  <---You must edit this line!
+IPAddress dnsserver(8, 8, 8, 8);  //DNS server              //  <---You must edit this line!
 unsigned int serverPort = 8090; // port to run the http server on
 
 

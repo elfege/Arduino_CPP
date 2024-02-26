@@ -112,10 +112,11 @@ const char MAIN_page[] PROGMEM = R"=====(
     }
 
     table {
-        position:relative;
-        margin:auto;
-        width:50%;
+        position: relative;
+        margin: auto;
+        width: 50%;
     }
+
     tr,
     .maintds {
         /*border: 1px solid gray;*/
@@ -157,12 +158,13 @@ const char MAIN_page[] PROGMEM = R"=====(
                     <h4 id="bell">BELL</h4>
                     <h6 id="localip"></h6>
                     <h6 id="mac"></h6>
+                    <h6><span>DEBUG:</span></h6>
                 </center>
             </tr>
             <tr>
                 <td class="maintds">
                     <div class="buttonDivs">
-                        <button id="open">OPEN</button>
+                        <button id="door">OPEN</button>
                         <button id="talk">TALK</button>
                         <button id="simulator">TEST</button>
 
@@ -172,7 +174,8 @@ const char MAIN_page[] PROGMEM = R"=====(
                     <div class="buttonDivs">
                         <button id="refresh">REFRESH</button>
                         <button id="reset">RESET</button>
-                        <button id="debug">DEBUG</button>
+
+                        <button id="debug">LOGS</button>
                         <button id="term">TERMINAL</button>
                         <button id="toggleIntervals">STOP SCRIPTS</button>
                     </div>
@@ -199,10 +202,9 @@ const char MAIN_page[] PROGMEM = R"=====(
     let Logs = false;
 
 
-    $("button").on("click", showTermHandler)
-    $("#serial").on("click", showTermHandler)
 
-    function showTermHandler(e) {
+
+    const showTermHandler = (e) => {
         e.preventDefault();
         debug("e.target.getAttribute('id'): ", e.target.getAttribute("id"))
         const id = e.target.getAttribute("id");
@@ -219,24 +221,34 @@ const char MAIN_page[] PROGMEM = R"=====(
         }
     }
 
+    $("button").on("click", showTermHandler)
+    $("#serial").on("click", showTermHandler)
+
     let scriptOn = false;
-    async function mainFunc(id) {
+    const mainFunc = async (id) => {
         console.log("mainFunc(", id, ")")
 
         if (id === "debug") {
             Logs = !Logs;
         }
 
-        const response = await axios({
-            url: `/${id}`,
-            method: "GET",
-        });
-
-        const data = response.data;
-        console.log("response: ", data)
-
-        if (id === "toggleIntervals") {
+        let data = ""
+        if (id !== "toggleIntervals") {
+            try {
+                const response = await axios({
+                    url: `/${id}`,
+                    method: "GET",
+                });
+                data = response.data;
+                console.log("response: ", data)
+                $(`#{id}`).text(data);
+            }
+            catch (err) {
+                //console.log(err)
+            }
+        } else if (id === "toggleIntervals") {
             if (!scriptOn) {
+                console.log("SCRIPT START")
                 $("#toggleIntervals").text("STOP SCRIPTS")
                 $("#toggleIntervals").css({
                     "background-color": "blue",
@@ -246,29 +258,15 @@ const char MAIN_page[] PROGMEM = R"=====(
 
             }
             else if (scriptOn) {
-                $("#toggleIntervals").text("RESUME SCRIPTS")
-                $("#toggleIntervals").css({
-                    "background-color": "red",
-                    "color": "white"
-                })
-                clearAllIntervals()
-
-
+                console.log("SCRIPT STOP")
+                clearAllIntervals() // takes care of updating jquery css
             }
             return
         }
+        else {
+            console.log("Unknown REQUEST...")
+        }
 
-        xhr.onreadystatechange = function () {
-            if (this.readyState == 4 && this.status == 200) {
-                console.log(xhr.responseText);
-                document.getElementById(id).innerText = xhr.responseText;
-                if (xhr.responseText === "DEBUG DISABLED") {
-                    Logs = false;
-                }
-            }
-        };
-        xhr.open("GET", url, true);
-        xhr.send();
 
     }
 
@@ -279,71 +277,96 @@ const char MAIN_page[] PROGMEM = R"=====(
         if ($(val).attr("id") !== undefined) ids.push($(val).attr("id"))
     });
 
-    async function checkStates() {
+    const checkStates = async () => {
+        try {
+            const response = await axios({
+                url: "/getstates",
+                method: "GET",
+            });
 
-        const response = await axios({
-            url: "/getstates",
-            method: "GET",
-        });
 
-        const data = response.data;
-        debug("checkStates data:" + data);
 
-        const arr = data.split(",")
-        const newArr = []
-        arr.forEach((val) => {
-            newArr.push(val.replace(" ", ":").split(":"))
-        })
-        const Obj = Object.fromEntries(newArr)
-        debug("entries:" + Obj)
-        for (let a of Object.keys(Obj)) {
-            debug(a + ":" + Obj[a])
-            if (a.includes("slider")) {
-                $(`#${a}`).val(Obj[a]);
-                $(`#sliderValue`).text(Obj[a])
-            }
-            else {
-                $(`#${a}`).text(Obj[a]);
-                if (a.includes("bell") && a.includes("active")) {
-                    $(`#${a}`).css({
-                        "color": "black",
-                        "backgroundColor": "yellow"
-                    });
+            const data = response.data;
+            debug("checkStates data:" + data);
 
+
+            const arr = data.split(",")
+            const newArr = []
+            arr.forEach((val) => {
+                newArr.push(val.replace(" ", ":").split(":"))
+            })
+            const Obj = Object.fromEntries(newArr)
+            debug("entries:" + JSON.stringify(Obj))
+            for (let a of Object.keys(Obj)) {
+                debug(a + ":" + a)
+                if (a === "") {
+                    continue; // Skip to the next iteration of the loop if the key is empty
                 }
-                else if (a.includes("bell")) {
-                    $(`#${a}`).css({
-                        "color": "blue",
-                        "backgroundColor": "teal"
-                    });
+                if (a.includes("slider")) {
+                    $(`#${a}`).val(Obj[a]);
+                    $(`#sliderValue`).text(Obj[a])
+                    break;
+                }
+                else {
+                    $(`#${a}`).text(Obj[a]);
+                    if (a.includes("bell") && a.includes("active")) {
+                        $(`#${a}`).css({
+                            "color": "black",
+                            "backgroundColor": "yellow"
+                        });
+
+                    }
+                    else if (a.includes("bell")) {
+                        $(`#${a}`).css({
+                            "color": "blue",
+                            "backgroundColor": "teal"
+                        });
+                    }
                 }
             }
+        } catch (err) {
+
+            console.log("Error:", err.message);
+
+            return;
         }
+
+
     }
 
 
-    function debug(msg) {
+    const debug = (msg) => {
         if (Logs) console.log(msg)
     }
 
 
-    async function getLocalIp() {
-        const response = await axios({
-            url: "/getip",
-            method: "GET",
-        });
-        console.log("ip response: ", response.data)
-        localIp = response.data;
-        $("#localip").text(localIp);
+    const getLocalIp = async () => {
+        try {
+            const response = await axios({
+                url: "/getip",
+                method: "GET",
+            });
+            console.log("ip response: ", response.data)
+            localIp = response.data;
+            $("#localip").text(localIp);
+        }
+        catch (err) {
+            //console.log(err)
+        }
     }
-    async function getMac() {
-        const response = await axios({
-            url: "/getmac",
-            method: "GET",
-        });
-        console.log("mac response: ", response.data)
-        mac = response.data;
-        $("#mac").text(mac);
+    const getMac = async () => {
+        try {
+            const response = await axios({
+                url: "/getmac",
+                method: "GET",
+            });
+            console.log("mac response: ", response.data)
+            mac = response.data;
+            $("#mac").text(mac);
+        }
+        catch (err) {
+            //console.log(err)
+        }
     }
     getMac()
 
@@ -354,7 +377,7 @@ const char MAIN_page[] PROGMEM = R"=====(
 
     })
 
-    function sliderEventListeners() {
+    const sliderEventListeners = () => {
         const Sliders = $("input")
         const sliderValues = $(".sliderValue")
 
@@ -374,48 +397,60 @@ const char MAIN_page[] PROGMEM = R"=====(
                 console.log("sliderValue = ", $(slider).val())
                 const name = id
                 $(SlidersValuesArr[index]).text(name + "'s speed: " + $(slider).val())
+                try {
+                    const response = axios({
+                        url: url,
+                        method: "GET",
+                    });
 
-                const response = axios({
-                    url: url,
-                    method: "GET",
-                });
-
-                // xhr.onreadystatechange = function () {
-                // if (this.readyState == 4 && this.status == 200) {
-                // console.log("slider response: ", xhr.responseText);
-                // $(slider).val(response.data)
-                $(e.target.id).val(response.data)
-                $(SlidersValuesArr[index]).text(response.data)
-                // }
-                // };
-                // xhr.open("GET", url, true);
-                // xhr.send();
+                    $(e.target.id).val(response.data)
+                    $(SlidersValuesArr[index]).text(response.data)
+                }
+                catch (err) {
+                    //console.log(err)
+                }
             })
         })
     }
 
+    const clearAllIntervals = () => {
+        scriptOn = false;
+        console.log("clearing intervals")
+        clearInterval(checkStatesInterval);
+        $("#toggleIntervals").text("RESUME SCRIPTS")
+        $("#toggleIntervals").css({
+            "background-color": "red",
+            "color": "white"
+        })
+        alert("All intervals cleared!")
+    }
+
+    const timeOutIntervals = () => {
+        setTimeout(clearAllIntervals, 60 * 5 * 1000);
+    }
+
+
     let checkStatesInterval = null;
     let ipRetrieveInterval = null;
-    function resumeIntervals() {
+    const resumeIntervals = () => {
         scriptOn = true;
         $("#toggleIntervals").css({
             "background-color": "blue",
             "color": "white"
         })
         console.log("resuming intervals");
-        checkStatesInterval = setInterval(checkStates, 500);
+        // checkStatesInterval = setInterval(checkStates, 1500); // takes up too much ressources 
         ipRetrieveInterval = setInterval(getLocalIp, 60 * 60 * 1000);
+        timeOutIntervals();
     }
 
     resumeIntervals();
 
-    //setTimeout(clearAllIntervals, 60 * 5 * 1000)
+    timeOutIntervals()
 
-    function clearAllIntervals() {
-        scriptOn = false;
-        console.log("clearing intervals")
-        clearInterval(checkStatesInterval);
-    }
+
+
+
 
 
 </script>

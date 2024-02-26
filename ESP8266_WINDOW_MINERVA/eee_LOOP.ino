@@ -54,18 +54,7 @@ void master() {
 
   serverAndHub();
 
-  fanmanagement();
-
-  if (fanIsOff && digitalRead(FAN)) {
-    fanOnMillis = millis();
-    fanIsOff = false;  // update fan state boolean
-  }
-
-  if ((millis() - fanOnMillis > (5 * 60 * 1000) && !fanIsOff) || (digitalRead(MA) == 0 || digitalRead(MA) == 0)) {
-    digitalWrite(FAN, 0);
-    fanIsOff = true;  // update fan state boolean
-  }
-
+  fanmanagement(); 
 
   if (!wasclosed && contactClosed) {
     wasclosed = true;
@@ -82,7 +71,9 @@ void master() {
     sendHub("switch off");
   }
 
-  if (millis() - previousMillisBlink > 1000) {
+  if (millis() - previousMillisBlink > 10000) {
+    digitalWrite(LED, !digitalRead(LED));
+    delay(50);
     digitalWrite(LED, !digitalRead(LED));
     previousMillisBlink = millis();
   }
@@ -178,13 +169,8 @@ String upTime() {
 
 void fanmanagement() {
 
-  if (fanIsOff && digitalRead(FAN)) {
-    fanOnMillis = millis();
-    fanIsOff = false;  // update fan state boolean
-  }
-
-  if ((millis() - fanOnMillis > (5 * 60 * 1000) && !fanIsOff) || (digitalRead(MA) == 0 || digitalRead(MA) == 0)) {
+  if (digitalRead(FAN) && !opening && !closing) {
     digitalWrite(FAN, 0);
-    fanIsOff = true;  // update fan state boolean
   }
+  
 }

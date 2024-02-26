@@ -1,8 +1,10 @@
 void httpHandler() {  
+  st::Everything::run();
   _server.handleClient();
   term.handleClient();  // WiFi terminal
   yield();
 }
+
 void WiFiHandler() {  
   if (WiFi.status() != WL_CONNECTED && !wifiLostAware) {
     Serial.println("******************* LOST WIFI CONNEXION ********************* ");

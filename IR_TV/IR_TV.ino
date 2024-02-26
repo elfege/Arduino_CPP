@@ -12,6 +12,9 @@
 
 #include <ArduinoOTA.h>
 
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
+
 #include <SmartThingsESP8266WiFi_DUAL_SSID_3_HUBS.h>
 
 //#include <SmartThingsESP8266WiFi_DUAL_SSID_DUAL_HUB.h>
@@ -30,6 +33,8 @@ SmartThingsCallout_t messageCallout;
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
+
+#include "WiFiTerm.h"// OTA DEBUG LIB Wifi Terminal
 
 #include "index.h"  //Web page header file
 

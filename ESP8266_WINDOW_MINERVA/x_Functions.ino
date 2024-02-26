@@ -68,7 +68,7 @@ void Close() {
   lastOperation = 2;  // saveToRTC() called in serverAndHubs()
 
   lastCmd = "close";
-  sendHub("switch off");  // send a response so it is received through parse() method
+  sendHub("switch off");  // send a response so it is received through the parse() method
   // to prevent it from stopping a closing procedure
 
   if (contactClosed) {
@@ -104,8 +104,7 @@ void Close() {
     if (!speedOverride) analogWrite(pwm, ULTRASLOW);  // default cruise speed
 
     Start = millis();
-    while (millis() - Start < 2000)
-      ;  // prevent false positive arm mvt by giving time to the interruptHandler to clear up its process
+    while (millis() - Start < 2000);  // prevent false positive arm mvt by giving time to the interruptHandler to clear up its process
     {
       master();
     }
@@ -120,7 +119,7 @@ void Close() {
     /************************************************************************************/
     //learnMethod_2(closeLearn, successfulCloseLearn);
 
-    // once successful, those methods might be skipped, so in the closing case, we need to wait for contact
+    // once successful, those methods might be skipped, so in the case of closing, we need to wait for contact
     unsigned long c = millis();
     while (!contactClosed && !stopped && !EMstop) {
       if (millis() - c > 5000) {
@@ -129,6 +128,7 @@ void Close() {
       }
       master();
     }
+    digitalWrite(FAN, 0);
 
     term.println("CLOSING LOOP ENDED");
     donotAcceptCmdsFromHubs = 0;

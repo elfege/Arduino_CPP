@@ -2,11 +2,8 @@ void loop() {
   loopTime = millis();
   if (!StopAll)
   {
-    // ESP.wdtDisable();
-    smartthing.run();
-    //glow();
-    _server.handleClient();
-    //lastRequestedState =
+    
+    http_handle();    
     currentState = tvIsOn() ? "on" : "off";
 
     // when the TV shuts itself off due to power saving mode, update smart hub's device state
@@ -15,7 +12,7 @@ void loop() {
       if (lastRequestedState != currentState)
       {
         msgState = "switch " + currentState;
-        buildDebug(msgState);
+        sendData(msgState);
         lastRequestedState = currentState;
       }
       previousMillis = millis();
@@ -34,4 +31,14 @@ void loop() {
   yield();
 
 
+}
+
+void http_handle(){
+  // ESP.wdtDisable();
+    smartthing.run();
+    //glow();
+    _server.handleClient();
+    //lastRequestedState =
+
+    term.handleClient();
 }

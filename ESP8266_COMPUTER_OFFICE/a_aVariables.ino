@@ -7,6 +7,8 @@ boolean allowshutDownWhenFail; // value to be updated by the device driver on th
 boolean noSleep = false;
 boolean STOP = false; // required when "off" command sent more than once within while() time
 boolean OnOffRunning = false;
+boolean new_state = false;
+
 
 int glw;
 int elapsed = 0;
@@ -17,6 +19,7 @@ unsigned long DELAY_SLEEP = 120000;
 unsigned long DELAY_FAILSAFE = 600000;
 unsigned long DELAY_NEWATTEMPT = 60000;
 unsigned long lastStateRefreshMillis = millis();
+unsigned long last_message_sent_millis = millis();
 
 unsigned long previousMillisBlink = 0;
 unsigned long lastOnMillis = 0;
@@ -26,6 +29,7 @@ unsigned long previousMillis_override_RESET = 0;
 unsigned long bootTime = millis();
 unsigned long millisHeartBit = millis();
 
-String debugData = "";
+
 String var = "";
-String lastState = "off";
+String last_state = "off";
+String last_state_sent = last_state;

@@ -32,9 +32,20 @@ void initXMLhttp()
 
   _server.on("/auto", Auto);
   _server.on("/off", []() {
-    acOff();
+    if (millis() - offRequestMillis > fanDurationWhenOff)
+    {
+      if(currentMode != "OFF"){
+    offRequestMillis = millis(); // allow fan to circulate for X minutes after turning off to prevent mold formation
+    }
+      acOff;
+    }
+    else {
+      term.println("OFF REQUEST IGNORED. FAN ONLY INSTEAD");
+      irsend.sendRaw(FAN, sizeof(FAN) / sizeof(int), khz);
+      delay(DELAY_CMD);
+    }
   });
- 
+  _server.on("/off_ovrd", off_override);
   _server.on("/ledtoggle", toggleLED);
   _server.on("/ledtogglebypass", toggleLEDbypass);
 
@@ -53,6 +64,12 @@ void initXMLhttp()
 
   _server.on("/refresh", Refresh);
   _server.on("/getMac", getMac);
+  
+  _server.on("/getOutsideTemp", [](){
+    String temp = String(outside_temperature);
+    _server.send(200, "text/html", temp);
+  });
+
   _server.on("/getTimeInfo", []()
   {
     String data = TimeInfos();

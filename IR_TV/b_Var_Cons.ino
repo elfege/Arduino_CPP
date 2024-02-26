@@ -1,3 +1,5 @@
+const char *NameOTA = "TV_REMOTE_ESP8266";
+
 boolean StopAll = false;
 boolean RefreshPage = true;
 boolean isDebugEnabled;    // enable or disable debug in this example
@@ -13,6 +15,7 @@ unsigned long previousMillis = 0;
 unsigned long previousMillisRefresh = 0;
 unsigned long previousMillisBlink = 0;
 unsigned long previousMillisTvState = 0;
+unsigned long lastCurrentLogMilli = 0; 
 unsigned long loopTime = 0;
 
 const int DELAY_SEC = 240; //in seconds (to facilitate debugging!)

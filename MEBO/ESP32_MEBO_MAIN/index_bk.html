@@ -1,0 +1,956 @@
+const char MAIN_page[] PROGMEM = R"=====(
+
+<html>
+<style>
+    /* container {
+        width: 100%;
+        text-align: center;
+    } */
+
+
+
+    th,
+    td {
+        border: 0px solid blue;
+    }
+
+    p {
+        border: 0px;
+        padding: 0px;
+        margin: 0px;
+    }
+
+    button {
+        width: 10rem;
+        height: 3rem;
+    }
+
+
+
+    /*Chrome*/
+    @media screen and (-webkit-min-device-pixel-ratio:0) {
+        input[type='range'] {
+            overflow: hidden;
+            width: 380px;
+            -webkit-appearance: none;
+            background-color: #1526e3;
+        }
+
+        input[type='range']::-webkit-slider-runnable-track {
+            height: 30px;
+            -webkit-appearance: none;
+            color: #1206f0;
+            margin-top: -1px;
+        }
+
+        input[type='range']::-webkit-slider-thumb {
+            width: 30px;
+            -webkit-appearance: none;
+            height: 30px;
+            cursor: ew-resize;
+            background: #f6f9f9;
+            border: 5px solid red;
+            box-shadow: -80px 0 0 80px #1526e3;
+        }
+
+    }
+
+    /** FF*/
+    input[type="range"]::-moz-range-progress {
+        background-color: #43e5f7;
+    }
+
+    input[type="range"]::-moz-range-track {
+        background-color: #9a905d;
+    }
+
+    /* IE*/
+    input[type="range"]::-ms-fill-lower {
+        background-color: #43e5f7;
+    }
+
+    input[type="range"]::-ms-fill-upper {
+        background-color: #9a905d;
+    }
+
+    .arrow {
+        display: inline-block;
+        width: 20;
+        height: 20;
+        border-style: solid;
+    }
+
+    .arrow.up {
+        border-width: 0 15px 10px 15px;
+        border-color: transparent transparent yellow transparent;
+        opacity: 1;
+        z-index: 12;
+    }
+
+    .arrow.down {
+        border-width: 10px 15px 0 15px;
+        border-color: yellow transparent transparent transparent;
+    }
+
+    .arrow.left {
+        border-width: 15px 10px 15px 0;
+        border-color: transparent yellow transparent transparent;
+    }
+
+    .arrow.right {
+        border-width: 15px 0 15px 10px;
+        border-color: transparent transparent transparent yellow;
+    }
+
+    .ptz-container {
+        width: 150px;
+        height: 150px;
+        position: relative;
+    }
+
+
+    #ptz,
+    #joystick {
+        position: relative !important;
+        width: 100% !important;
+        right: 0;
+        margin: 0 !important;
+        opacity: 0.4;
+    }
+
+    #video {
+        position:relative;
+        width:fit-content;
+    }
+
+    #videoSize,
+    #videoRes {
+        position: relative;
+        margin: auto;
+        width: 100% !important;
+        font-size: 0.5rem;
+    }
+
+    .container {
+			position: relative;
+			width: 300px;
+			height: 300px;
+			margin: auto;
+		}
+		.outer-circle {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			border-radius: 50%;
+			border: 1px solid #000;
+			box-sizing: border-box;
+		}
+		.inner-circle {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: 50px;
+			height: 50px;
+			border-radius: 50%;
+			background-color: red;
+			cursor: move;
+		}
+</style>
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEBO</title>
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+</head>
+
+<body onload="UpdateValues()">
+
+    <h4>
+        <center>
+            <h1 style="color:blue;">MEBO CONTROL INTERFACE</h1>
+        </center>
+    </h4>
+
+
+
+    <div class="container-fluid">
+
+        <!-- TOP BUTTONS STOP LOGS  -->
+        <div class="row">
+            <div class="col-fluid d-flex align-items-center">
+                <button class="btn btn-danger" id="buttonPowerON" onclick="buttonPowerON_f()"> START </button>
+                <button class="btn btn-dark" id="buttonPowerOFF" onclick="buttonPowerOFF_f()"> OFF </button>
+                <button class="btn btn-outline-dark btn-sm" id="stopall" onclick="MainFunc('/stopall', id)">STOP
+                    ALL!</button>
+
+                <button class="btn btn-outline-dark" id="reset" onclick="MainFunc('/reset', id)"> RESET </button>
+                <button class="btn btn-outline-dark" id="buttonCharger"
+                    onclick="buttonChargerF('/charge')">CHARGER</button>
+                <button class="btn btn-outline-dark" id="logs" onclick="MainFunc('/logs', id)"> LOGS</button>
+
+            </div>
+            <div class="col-sm">
+                <div class="alert alert-warning bt-5">
+                    <h1><span id="volts">BATTERY</span> Volts</h1>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="row">
+
+
+            <!-- FIRST MASTER COLUMN -->
+            <div class="col-sm">
+                <!-- VIDEO AND DRIVE -->
+                <div class="row alert alert-info">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-sm-fluid text-center w-50">
+
+                                <img id="video" src="http://192.168.10.15:81/mjpg/MEBO/video.mjpg" />
+
+                            </div>
+                            <div class="col">
+                                <div class="container">
+                                    <!-- JOYSTICK -->
+                                    <div class="row">
+                                        <div id="joystick" class="col-sm-fluid text-center w-100">
+                                            <div class="row alert alert-dark">
+                                                <div class="container">
+                                                    <div class="row">
+                                                        <div class="col-sm">
+                                                            <h4 class="display-6 text-center">DRIVE</h4>
+                                                            <div class="d-flex flex-column justify-content-center align-items-center"
+                                                                style="height: 150px;">
+                                                                <button style="border: none;"
+                                                                    class="btn btn-outline-dark w-100 mb-2"
+                                                                    onclick="MainFunc('/fwd', 'MVT-state')">
+                                                                    <i class="arrow up"></i>
+                                                                </button>
+                                                                <div class="d-flex align-items-center">
+                                                                    <button style="border: none;"
+                                                                        class="btn btn-outline-dark w-100 me-2"
+                                                                        onclick="MainFunc('/leftstep', 'MVT-state')">
+                                                                        <i class="arrow left"></i>
+                                                                    </button>
+                                                                    <button style="border: none;"
+                                                                        class="btn btn-outline-dark w-100 me-2"
+                                                                        onclick="MainFunc('/left', 'MVT-state')">
+                                                                        <i class="arrow left"></i>
+                                                                    </button>
+                                                                    <button style="border: none;"
+                                                                        class="btn btn-danger w-150 me-2 ms-2"
+                                                                        onclick="MainFunc('/stop', 'MVT-state')"></button>
+                                                                    <button style="border: none;"
+                                                                        class="btn btn-outline-dark w-100 ms-2"
+                                                                        onclick="MainFunc('/right', 'MVT-state')">
+                                                                        <i class="arrow right"></i>
+                                                                    </button>
+                                                                    <button style="border: none;"
+                                                                        class="btn btn-outline-dark w-100 me-2"
+                                                                        onclick="MainFunc('/rightstep', 'MVT-state')">
+                                                                        <i class="arrow right"></i>
+                                                                    </button>
+                                                                </div>
+                                                                <button style="border: none;"
+                                                                    class="btn btn-outline-dark w-100 mt-2"
+                                                                    onclick="MainFunc('/rvs', 'MVT-state')">
+                                                                    <i class="arrow down"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- PTZ -->
+                                    <div class="row">
+
+                                        <div id="ptz" class="col-sm-fluid text-center w-50">
+                                            <div class="col-sm">
+                                                <div class="row alert alert-dark">
+                                                    <div id="ptzContainer" class="container">
+                                                        <div class="row">
+                                                            <div class="col-sm-fluid">
+                                                                <h4 class="display-6 text-center">PTZ</h4>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-12">
+                                                                <div class="d-flex flex-column justify-content-center align-items-center"
+                                                                    style="height: 150px;">
+                                                                    <button class="btn btn-outline-dark mb-2"
+                                                                        onclick="ptzup()">
+                                                                        <i class="arrow up"></i>
+                                                                    </button>
+                                                                    <div class="d-flex align-items-center">
+                                                                        <button class="btn btn-outline-dark me-2"
+                                                                            onclick="ptzleft()">
+                                                                            <i class="arrow left"></i>
+                                                                        </button>
+                                                                        <button class="btn btn-outline-dark ms-2"
+                                                                            onclick="ptzright()">
+                                                                            <i class="arrow right"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                    <button class="btn btn-outline-dark mt-2"
+                                                                        onclick="ptzdown()">
+                                                                        <i class="arrow down"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-fluid d-flex align-items-center">
+                                <button class="btn btn-info text-wrap btn-block" id="videoRes"
+                                    onClick="toggleVideoRes()">CHANGE RESOLUTION</button>
+                                <button class="btn btn-info text-wrap btn-block" id="videoSize"
+                                    onClick="toggleVideoSize()">CHANGE SIZE</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="row">
+                    <span id="MVT-state">current state</span>
+                    <h4>keyboard drive</h4>
+                    <input type="text" class="input-group-text" id="textBox1" size="40"
+                        placeholder="click here and then use keyboard's arrows">
+                </div>
+
+            </div>
+
+            <!-- SECOND MASTER COLUMN -->
+            <div class="col-sm">
+                <!-- PROGRAMMED RIDE -->
+
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <h4>PROGRAMMED RIDE</h4>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-2">
+                            <h8 style=color:blue;>SPEED: <span id="speed"></span> &nbsp &nbsp </h8>
+                        </div>
+                        <div class="col-sm-6">
+                            <input type="range" min="140" max="200" value="170" class="slider" id="speedRange"
+                                data-orientation="vertical">
+                        </div>
+                        <div class="col-sm-4"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-2">
+                            <h8 style=color:blue;>DISTANCE: <span id="distance"></span> &nbsp </h8>
+                        </div>
+                        <div class="col-sm-6">
+                            <input type="range" min="1" max="200" value="15" class="slider" id="distanceRange"
+                                oninput="sendSlider(id, value)">
+                        </div>
+                        <div class="col-sm-4"></div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm">
+                            <span>Enter a distance in cm:</span>
+                        </div>
+                        <div class="col-sm">
+                            <input class="input-group-text" type="text" id="distRange" value="">
+                        </div>
+                        <div class="col-sm">
+                            <button class="btn btn-outline-primary w-75 h-75"
+                                onclick="textDistanceRange()">SAVE</button>
+                            <p id="exactDist"></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm">
+                            <button class="btn btn-outline-primary btn-block w-100"
+                                onclick="executeFWD()">Exec.FWD</button>
+                        </div>
+                        <div class="col-sm">
+                            <button class="btn btn-warning btn-block w-100"
+                                onclick="MainFunc('/cancelstopall', id)">STOP
+                                ALL</button>
+                        </div>
+                        <div class="col-sm">
+                            <button class="btn btn-outline-primary btn-block w-100" onclick="executeRVS()">Exec.RVS
+                            </button>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-sm">
+                            <button class="btn btn-outline-primary btn-block w-100"
+                                onclick="MainFunc('/followlinervs', 'MVT-state')">DOCK RVS</button>
+                        </div>
+                        <div class="col-sm">
+                            <button class="btn btn-outline-primary btn-block w-100"
+                                onclick="MainFunc('/followlinefwd', 'MVT-state')">UNDOCK </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm">
+                            <button class="btn btn-outline-primary btn-block w-100"
+                                onclick="MainFunc('/ignoreobs', id)">
+                                Ignore Obst </button>
+                        </div>
+                        <div class="col-sm">
+                            <button class="btn btn-outline-secondary btn-block w-100"
+                                onclick="MainFunc('/selfdrive', id)">
+                                Auto Roam </button>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <!-- ARM CONTROL -->
+                <div class="row mt-5">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-sm"></div>
+                            <div class="col-sm">
+                                <h5>ARM CONTROL</h5>
+                            </div>
+                            <div class="col-sm"></div>
+                        </div>
+                    </div>
+                    <div class="col-sm"></div>
+                    <div class="col-sm">
+                        <button class="btn btn-danger w-100" onclick="MainFunc('/stoparm', id)"> STOP
+                        </button>
+                    </div>
+                    <div class="col-sm">
+                        <button class="btn btn-secondary w-100" onclick="MainFunc('/armcenter', id)">
+                            CENTER
+                        </button>
+                    </div>
+                    <div class="col-sm"></div>
+                </div>
+                <div class="row">
+                    <div class="col-sm"></div>
+                    <div class="col-sm">
+                        <button class="btn btn-outline-dark w-100" onclick="MainFunc('/ArmUp', id)">ARM <i
+                                class="arrow up"></i></button>
+                    </div>
+                    <div class="col-sm">
+                        <button class="btn btn-outline-dark w-100" onclick="MainFunc('/ArmDown', id)">ARM <i
+                                class="arrow down"></i>
+                        </button>
+                    </div>
+                    <div class="col-sm"></div>
+                </div>
+                <div class="row">
+                    <div class="col-sm"></div>
+                    <div class="col-sm">
+                        <button class="btn btn-outline-secondary w-100" onclick="MainFunc('/armupstep', id)"> step
+                            <i class="arrow up"></i> </button>
+                    </div>
+                    <div class="col-sm">
+                        <button class="btn btn-outline-secondary w-100" onclick="MainFunc('/armdownstep', id)"> step
+                            <i class="arrow down"></i> </button>
+                    </div>
+
+                    <div class="col-sm"></div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-sm"></div>
+                    <div class="col-sm">
+                        <h5>FOREARM</h5>
+                    </div>
+                    <div class="col-sm"></div>
+                </div>
+                <div class="row">
+                    <div class="col-sm"></div>
+                    <div class="col-sm">
+                        <button class="btn btn-outline-dark w-100" onclick="MainFunc('/ForeArmUp', id)">FOREARM <i
+                                class="arrow up"></i>
+                        </button>
+                    </div>
+                    <div class="col-sm">
+                        <button class="btn btn-outline-dark w-100" onclick="MainFunc('/ForeArmDown', id)">FOREARM <i
+                                class="arrow down"></i>
+                        </button>
+                    </div>
+                    <div class="col-sm"></div>
+                </div>
+                <div class="row">
+                    <div class="col-sm"></div>
+                    <div class="col-sm">
+                        </button> <button class="btn btn-outline-secondary w-100"
+                            onclick="MainFunc('/forearmupstep', id)">step
+                            <i class="arrow up"></i> </button>
+                    </div>
+                    <div class="col-sm">
+                        <button class="btn btn-outline-secondary w-100" onclick="MainFunc('/forearmdowntep', id)">
+                            step <i class="arrow down"></i> </button>
+                    </div>
+                    <div class="col-sm"></div>
+                </div>
+                <div class="row m-2">
+                    <div class="col-sm"></div>
+                    <div class="col-sm">
+                        <h5>CLAMP</h5>
+                    </div>
+                    <div class="col-sm"></div>
+                </div>
+                <div class="row">
+
+                    <div class="col-sm">
+                        <button class="btn btn-primary w-100" onclick="MainFunc('/CloseClamp', id)"> CLOSE
+                        </button>
+                    </div>
+                    <div class="col-sm">
+                        <button class="btn btn-secondary w-100" onclick="MainFunc('/wristmiddle', id)"> GRAB
+                            POSITION
+                        </button>
+                    </div>
+                    <div class="col-sm">
+                        <button class="btn btn-primary w-100" onclick="MainFunc('/OpenClamp', id)"> OPEN
+                        </button>
+                    </div>
+                </div>
+                <div class="row m-2">
+                    <div class="col-sm"></div>
+                    <div class="col-sm">
+                        <h5>WRIST</h5>
+                    </div>
+                    <div class="col-sm"></div>
+                </div>
+                <div class="row">
+                    <div class="col d-flex justify-content-between">
+                        <button class="btn btn-primary w-50" onclick="MainFunc('/wristleft', id)">
+                            <i class="arrow left"></i>
+                        </button>
+                        <button class="btn btn-primary w-50" onclick="MainFunc('/wristright', id)">
+                            <i class="arrow right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col d-flex justify-content-between">
+                        <button class="btn btn-outline-secondary w-50" onclick="MainFunc('/wristleftstep', id)">
+                            <i class="arrow left"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary w-50" onclick="MainFunc('/wristrightstep', id)">
+                            <i class="arrow right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- TERMINAL -->
+    <div class="row">
+
+        <div class="col-sm">
+            <h4 style=margin:0px>Serial Output</h4>
+            <iframe width="100%" height="500px" src="http://192.168.10.222/term.html" style="border:1px solid black;">
+            </iframe>
+        </div>
+    </div>
+    </div>
+
+</body>
+<script>
+
+    $(document).ready(function () {
+        // for all sliders, since we have only these 2 using the same function
+        $('.slider').on('change', function () {
+            console.log($(this).val());
+            sendSlider(this.id, this.value)
+        });
+        $('.slider').on('input', function () {
+            // update speed value
+            if ($(this).attr('id') == 'speedRange') {
+                $('#speed').text($(this).val());
+            }
+            // update distance value
+            else if ($(this).attr('id') == 'distanceRange') {
+                $('#distance').text($(this).val());
+            }
+        });
+    });
+
+
+
+    function textDistanceRange() {
+        var x = document.getElementById("distRange").value;
+        document.getElementById("exactDist").innerHTML = x;
+        sendSlider("distanceRange", x)
+    }
+
+    function sendSlider(id, value) {
+        var xhr = new XMLHttpRequest();
+        var url = "/" + id + "=" + value;
+        xhr.open("GET", url, true);
+        xhr.send();
+    }
+
+
+    textBox1.addEventListener('keyup', (e) => {
+        MainFunc('/stop', 'MVT-state');
+        console.log(`keyup event`);
+    });
+
+
+
+    function buttonChargerF(name) {
+        console.log("button was clicked!");
+        var xhr = new XMLHttpRequest();
+        var url = name;
+
+        xhr.open("GET", url, true);
+        xhr.send();
+
+        var buttonChargerStatus = document.getElementById("buttonCharger").innerText
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("buttonCharger").innerText = this.responseText;
+                console.log(xhr.responseText);
+            }
+        };
+        getvolts();
+    };
+    //document.addEventListener('DOMContentLoaded', buttonChargerF, false);
+
+    function getvolts() {
+        console.log("button was clicked!");
+        var xhr = new XMLHttpRequest();
+        var url = "/getvolts";
+
+        xhr.open("GET", url, true);
+        xhr.send();
+
+        var buttonChargerStatus = document.getElementById("volts").innerText
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("volts").innerText = this.responseText + "V";
+                console.log(xhr.responseText);
+            }
+        };
+    };
+
+
+    function buttonPowerOFF_f() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'http://192.168.10.105/L'); // so it can send it even when ESP is no longer responding
+        xhr.send();
+        xhr = new XMLHttpRequest();
+        var url = "/OFF";
+        xhr.open("GET", url, true);
+        xhr.send();
+        console.log(xhr.responseText)
+        //alert("ROBOT SUCCESSFULLY TURNED OFF!");
+
+    };
+    //document.addEventListener('DOMContentLoaded', buttonPowerOFF, false);
+
+    function buttonPowerON_f() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'http://192.168.10.105/H'); // so it can send it even when ESP is no longer responding or off
+        xhr.send();
+        xhr = new XMLHttpRequest();
+        var url = "/ON";
+        xhr.open("GET", url, true);
+        xhr.send();
+        console.log(xhr.responseText)
+        //alert("ROBOT SUCCESSFULLY TURNED ON!");
+    };
+
+
+    function ptzup() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'http://192.168.10.15:81/cam/MEBO/pos=2&user=admin&pw=!ROtrashriska$1977');
+
+        xhr.send();
+        console.log(xhr.responseText)
+        //alert("ROBOT SUCCESSFULLY TURNED ON!");
+
+    };
+    function ptzdown() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'http://192.168.10.15:81/cam/MEBO/pos=3&user=admin&pw=!ROtrashriska$1977');
+
+        xhr.send();
+        console.log(xhr.responseText)
+        //alert("ROBOT SUCCESSFULLY TURNED ON!");
+
+    };
+    function ptzleft() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'http://192.168.10.15:81/cam/MEBO/pos=0&user=admin&pw=!ROtrashriska$1977');
+
+        xhr.send();
+        console.log(xhr.responseText)
+        //alert("ROBOT SUCCESSFULLY TURNED ON!");
+
+    };
+    function ptzright() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'http://192.168.10.15:81/cam/MEBO/pos=1&user=admin&pw=!ROtrashriska$1977');
+
+        xhr.send();
+        console.log(xhr.responseText)
+        //alert("ROBOT SUCCESSFULLY TURNED ON!");
+
+    };
+
+
+    function MainFunc(name, id) {
+        var xhr = new XMLHttpRequest();
+        var url = name;
+        xhr.open("GET", url, true);
+        xhr.send();
+
+        xhr.onreadystatechange = function () {
+            if (id === 'MVT-state' || id === 'stopall' || id === 'stopallstate' || id === 'ignoreobsstate' || id === 'roamingstate') {
+                if (this.readyState == 4 && this.status == 200) {
+                    document.getElementById(id).innerText = this.responseText;
+                    console.log(xhr.responseText);
+                }
+            }
+            else {
+                console.log("not MVT-state");
+            }
+        };
+    };
+    //document.addEventListener('DOMContentLoaded', MainFunc, false);
+
+    function executeFWD() {
+        console.log("EXEC FWD");
+        var xhr = new XMLHttpRequest();
+        var url = "/executefwd";
+        xhr.open("GET", url, true);
+        xhr.send();
+    };
+    //document.addEventListener('DOMContentLoaded', executeFWD, false);
+
+    function executeRVS() {
+        console.log("EXEC RVS");
+        var xhr = new XMLHttpRequest();
+        var url = "/executervs";
+        xhr.open("GET", url, true);
+        xhr.send();
+    };
+    //document.addEventListener('DOMContentLoaded', executeRVS, false);
+
+    function UpdateValues() {
+        updateChargerStatus();
+        updateVoltsStatus();
+    };
+
+    window.setInterval(updateVoltsStatus, 60000);
+
+    function updateChargerStatus() {
+        var xhr = new XMLHttpRequest();
+        var url = "/updatecharge";
+
+        xhr.open("GET", url, true);
+        xhr.send();
+
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("buttonCharger").innerText = this.responseText;
+                console.log(xhr.responseText);
+            }
+        };
+    };
+    //document.addEventListener('DOMContentLoaded', updateChargerStatus, false);// can use this instead of "load". TO DO... 
+
+
+    function updateVoltsStatus() {
+        var xhr = new XMLHttpRequest();
+        var url = "/getvolts";
+        xhr.open("GET", url, true);
+        xhr.send();
+
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("volts").innerText = this.responseText;
+                console.log(xhr.responseText);
+            }
+        };
+    };
+    //document.addEventListener('DOMContentLoaded', updateVoltsStatus, false);
+
+    const smartDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase());
+    const sizeSmartPhone = "100%"
+    let urlSmartPhone = ""
+
+    let size1 = '200'
+    let size2 = '300'
+    let size3 = '400'
+    let size4 = '500'
+    let size5 = '600'
+    let size6 = '700'
+    let size7 = '800'
+    let size8 = '900'
+    let size9 = '1000'
+    let size10 = '1500'
+
+    let url1 = ``
+    let url2 = ``
+    let url3 = ``
+    let url4 = ``
+    let url5 = ``
+    let url6 = ``
+
+
+    let pwd = "";
+    jQuery(async () => {
+        try {
+            const response = await axios.get("http://192.168.10.222/getpwd");
+            pwd = response.data;
+            console.log("Password retrieved:", pwd);
+        } catch (error) {
+            console.log("Error retrieving password from API:", error);
+            //pwd = window.prompt("Couldn't retrieve password! Type the password for the camera here.");
+        }
+        console.log("PASSWORD:", pwd);
+
+        url1 = `http://192.168.10.15:81/mjpg/MEBO/video.mjpg?q=50&w=200&user=admin&pw=${pwd}`
+        url2 = `http://192.168.10.15:81/mjpg/MEBO/video.mjpg?q=50&w=300&user=admin&pw=${pwd}`
+        url3 = `http://192.168.10.15:81/mjpg/MEBO/video.mjpg?q=50&w=400&user=admin&pw=${pwd}`
+        url4 = `http://192.168.10.15:81/mjpg/MEBO/video.mjpg?q=50&w=500&user=admin&pw=${pwd}`
+        url5 = `http://192.168.10.15:81/mjpg/MEBO/video.mjpg?q=50&w=600&user=admin&pw=${pwd}`
+        url6 = `http://192.168.10.15:81/mjpg/MEBO/video.mjpg?q=50&w=700&user=admin&pw=${pwd}`
+        url7 = `http://192.168.10.15:81/mjpg/MEBO/video.mjpg?q=50&w=800&user=admin&pw=${pwd}`
+        url8 = `http://192.168.10.15:81/mjpg/MEBO/video.mjpg?q=50&w=900&user=admin&pw=${pwd}`
+        url9 = `http://192.168.10.15:81/mjpg/MEBO/video.mjpg?q=50&w=1000&user=admin&pw=${pwd}`
+        url10 = `http://192.168.10.15:81/mjpg/MEBO/video.mjpg?q=50&w=12800&user=admin&pw=${pwd}`
+
+        urlSmartPhone = `http://192.168.10.15:81/mjpg/MEBO/video.mjpg?q=50&w=450&user=admin&pw=${pwd}`
+
+        if (smartDevice) {
+            $("#video").attr("src", urlSmartPhone).css("height", sizeSmartPhone)
+            $("#videoSize").remove()
+        }
+        else {
+            $("#video").attr("src", url3).css("width", size9)
+        }
+        $("#ptz").draggable()
+        $("#joystick").draggable()
+    });
+
+
+    let newUrl = ""
+    function toggleVideoRes() {
+        console.log("toggle video resolution")
+
+        newUrl =
+            newUrl === url1 ? url2 :
+                newUrl === url2 ? url3 :
+                    newUrl === url3 ? url4 :
+                        newUrl === url4 ? url5 :
+                            newUrl === url5 ? url6 :
+                                newUrl === url6 ? url7 :
+                                    newUrl === url7 ? url8 :
+                                        newUrl === url8 ? url9 :
+                                            newUrl === url9 ? url10 : url1
+
+        $("#video").attr("src", newUrl)
+
+    }
+    let newSize = ""
+    function toggleVideoSize() {
+        console.log("toggle video size")
+
+        newSize =
+            newSize === size1 ? size2 : newSize === size2 ? size3 :
+                newSize === size3 ? size4 : newSize === size4 ? size5 :
+                    newSize === size5 ? size6 : newSize === size6 ? size7 :
+                        newSize === size7 ? size8 : newSize === size8 ? size9 :
+                            newSize === size9 ? size10 : size1;
+
+        $("#video").css({
+            "width": `${newSize}px`,
+            "height": "auto"
+        })
+
+    }
+
+
+
+    var pressed = false;
+    textBox1.addEventListener('keydown', (e) => {
+        if (!e.repeat) {
+            console.log(`SENDING DATA. key property value is "${e.key}"`);
+
+            var thecode = e.keyCode;
+
+            if (thecode === 38) {
+                url = "/fwd";
+            }
+            else if (thecode === 39) {
+                url = "/right";
+            }
+            else if (thecode === 37) {
+                url = "/left";
+            }
+            else if (thecode === 40) {
+                var url = "/rvs";
+            }
+            else if (thecode === 16 || thecode === 32 || thecode === 17 || thecode === 35 || thecode === 46) {
+                var url = "/stop";
+            }
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", url, true);
+            xhr.send();
+
+            xhr.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    document.getElementById("MVT-state").innerText = this.responseText;
+                    console.log(xhr.responseText);
+                }
+            };
+        }
+        else {
+            console.log(`keydown event repeats. key property value is "${e.key}"`);
+        }
+    });
+</script>
+
+
+</html>
+)=====";

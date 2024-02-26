@@ -1,7 +1,7 @@
 void PowerOn() {
   term.println("POWER ON");
   lastloop = 0;
-  runpower = 1;
+  switch_door_operation_is_running = true;
   term.println("pressing talk button");
   digitalWrite(TALK, PRESS);  // talk button to activate intercom
   wait(2000);                 // wait n seconds to simulate time needed to answer/say something over the intercom
@@ -15,15 +15,14 @@ void PowerOn() {
   digitalWrite(DOOR, RELEASE);  // release door's button
 
   term.println("Looking at videofeed");
-  wait(10000);  // leaves time to look at the videofeed
+  wait(5000);  // leaves time to look at the videofeed
 
   term.println("now pressing talk buttont to terminate com");
   digitalWrite(TALK, PRESS);  // press talk button to terminate com
   wait(200);
-  digitalWrite(TALK, RELEASE);  // release talk button
-  wait(200); //wait long enough for voltage measurement to take effect on the next cycle
-  runpower = 0;//inform main loop it's done
-  
+  digitalWrite(TALK, RELEASE);               // release talk button
+  wait(200);                                 //wait long enough for sensorValue measurement to take effect on the next cycle
+  switch_door_operation_is_running = false;  //inform main loop it's done
 }
 
 void talk() {
@@ -40,7 +39,7 @@ void talk() {
     digitalWrite(TALK, PRESS);
     _server.send(200, "text/html", "TALKING");
   }
-  Refresh();
+  // Refresh(); //overrides the desired switch on event we want to send...
 }
 
 void open() {
@@ -57,10 +56,10 @@ void open() {
     digitalWrite(DOOR, PRESS);
     _server.send(200, "text/html", "OPENING");
   }
-  Refresh();
+  // Refresh(); //overrides the desired switch on event we want to send...
 }
 void close() {
-  while (voltage >= Val && lastloop <= 4 && runpower != 0) {
+  while (sensorValue >= threshold && lastloop <= 4 && switch_door_operation_is_running) {
 
     digitalWrite(TALK, PRESS);  // press talk button to terminate communication
     wait(200);
@@ -69,7 +68,7 @@ void close() {
     lastloop++;
     httpHandler();
   }
-  Refresh();
+  // Refresh(); //overrides the desired switch on event we want to send...
 }
 void on() {
   open();
@@ -85,7 +84,8 @@ void PowerOff() {
     term.println("POWER OFF");
     digitalWrite(TALK, RELEASE);  //    bell is off on RELEASE
     digitalWrite(DOOR, RELEASE);  //
-    Refresh();
+    send_event("switch off");
+    // Refresh(); //overrides the desired switch on event we want to send...
   }
 }
 
@@ -93,23 +93,31 @@ void httpHandler() {
   smartthing.run();
   _server.handleClient();  // JS webpage and wifi terminal
   term.handleClient();     // WiFi terminal
-  ArduinoOTA.handle();
   yield();
 }
 
-void sendHub(String var)  // called within Arduino C
+void send_event(String var)  // called within Arduino C
 {
-  _server.send(200, "text/html", var);
-
-  term.println("smartthing.send()");
+  sent = false;
+  term.println("Sending event message: " + var);
   smartthing.send(var);
+  _server.send(200, "text/html", var);
+  term.println("message sent");
+  wait(1000);
+  sent = true;
+}
+
+void test() {
+  term.println("RUNNING A TEST");
+  runsim = true;
 }
 
 
 void Refresh() {
   term.println("REFRESH CALLED!");
   refreshrequest = true;
-  getStates(true);
+  getStates(true, "refresh");
+  lastRefresh = millis();
 }
 
 
@@ -130,19 +138,7 @@ void Blink(int times, int lapse) {
   }
 }
 
-void test() {
-  term.println("SIMLATION ON");
-  runsim = true;
-  
 
-  // _server.send(200, "text/html", "simulator TESTING,");
-  // sendToHub("bell active");
-  // sendToHub("acceleration active");
-  wait(500);
-  Refresh();
-  term.println("SIMULATION OFF");
-  _server.send(200, "text/html", "simulator TEST,");
-}
 
 /*****************************************************************************
                               SMARTTHINGS CALLOUT  
@@ -184,6 +180,7 @@ void wait(int time) {
   unsigned long Start = millis();
   while (millis() - Start < time) {
     httpHandler();
+    yield();
   }
 }
 

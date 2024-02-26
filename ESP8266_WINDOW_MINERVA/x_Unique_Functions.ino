@@ -93,6 +93,8 @@ void Stop(String cmdOrigin)
 void simpleStop()
 {
   EMstop = !EMstop;
+  closing = false;
+  opening = false;
   analogWrite(pwm, 0);
   digitalWrite(MA,  0);
   digitalWrite(MB,  0);
@@ -111,6 +113,7 @@ void pinConfig()
   pinMode(MA, OUTPUT);
   pinMode(MB, OUTPUT);
   pinMode(FAN, OUTPUT);
+  digitalWrite(FAN, 0);
   //  pinMode(armMov, INPUT_PULLUP); // interrupt pin // NOT IMPLEMENTED YET
   //  attachInterrupt(digitalPinToInterrupt(armMov), handleArmMovInterrupt, CHANGE);
   pinMode(contact_sensor, INPUT_PULLUP);

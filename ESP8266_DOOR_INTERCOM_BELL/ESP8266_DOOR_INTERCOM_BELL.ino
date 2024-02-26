@@ -16,8 +16,7 @@
 //*****************************************************************************
 /// @file
 /// @brief
-///   Arduino SmartThings Ethernet ESP8266 WiFi Window Control August 2019
-///
+/// Arduino SmartThings Ethernet ESP8266 WiFi Window Control August 2019
 ///
 //*****************************************************************************
 
@@ -48,7 +47,7 @@ char timeServer[] = "0.ca.pool.ntp.org";
 
 // You can specify the time server pool and the offset (in seconds, can be
 // changed later with setTimeOffset() ). Additionaly you can specify the
-// update interval (in milliseconds, can be changed using setUpdateInterval() ).
+// update interthreshold(in milliseconds, can be changed using setUpdateInterval() ).
 NTPClient timeClient(ntpUDP, timeServer, (3600 * TIME_ZONE_OFFSET_HRS), NTP_UPDATE_INTERVAL_MS);
 
 
@@ -65,7 +64,6 @@ NTPClient timeClient(ntpUDP, timeServer, (3600 * TIME_ZONE_OFFSET_HRS), NTP_UPDA
 
 
 #include "WiFiTerm.h"// OTA DEBUG LIB Wifi Terminal
- 
 
 
 #include <SmartThingsESP8266WiFi_DUAL_SSID_3_HUBS.h>

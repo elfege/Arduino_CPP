@@ -84,6 +84,18 @@ void initXMLhttp()
     _server.send(200, "text/plain", "OPEN A CAN");
     openCan();
   });
+   _server.on("/openfree", []()
+  {
+    _server.send(200, "text/plain", "OPEN A CAN");
+    open_free();
+  });
+
+   _server.on("/getmac", []()
+  {
+    String str = WiFi.macAddress();
+    _server.send(200, "text/plain", str);
+  });
+
   _server.on("/lock", []()
   {
     if (!canLocked()) {
@@ -93,6 +105,33 @@ void initXMLhttp()
       unlock();
       _server.send(200, "text/plain", "UNLOCKING");
     }
+  });
+
+  _server.on("/OTA", [](){
+    _server.send(200, "text/plain", "OTA WAIT");
+    readyOTA = true;
+    readyOTAmillis = millis();
+  });
+
+  _server.on("/awaitOTA", [](){
+    // http response to be sent from mainHandler() after 60 seconds.  
+  });
+  
+  _server.on("/force_unlock", []()
+  {
+    unlock(); 
+    delay(300);
+
+      _server.send(200, "text/plain", "UNLOCKED");
+
+  });
+  _server.on("/force_lock", []()
+  {
+    lock(); 
+    delay(300);
+
+      _server.send(200, "text/plain", "UNLOCKED");
+
   });
 
   _server.on("/verticalup", []()
@@ -126,6 +165,11 @@ void initXMLhttp()
   _server.on("/clean", []()
   {
     cleanOpener();
+  });
+
+  _server.on("/freecanlid", []() 
+  {
+    freeCanLid();
   });
 
   _server.on("/getip", []()
@@ -165,7 +209,7 @@ void initXMLhttp()
       unsigned long Start = millis();
       while (!stopped && Start - millis() < 4000)  // needed time to execute
       {
-        mainHandler();
+        yield();
       }
       // then push and record the start time (within push method)
       cosinusPush();
@@ -236,9 +280,10 @@ void getStates(bool smartthingReq)
   String canposition = canDown() ? "CAN READY" : canInPosition() ? "CAN IN POSITION"
                        : "NO CAN";
   String deformation = deformed() ? "Defomation" : "No deformation";
-  String canLeft = oneCanLeft() ? "ONLY ONE CAN LEFT" : empty() ? "FEEDER IS EMPTY!"
-                   : full()    ? "FULL"
-                   : "ERROR";
+  // String canLeft = oneCanLeft() ? "ONLY ONE CAN LEFT" : empty() ? "FEEDER IS EMPTY!"
+  //                  : full()    ? "FULL"
+  //                  : "ERROR";
+  String canLeft = empty() ? "EMPTY" : "";
   String feedStatus = feeding ? "FEEDING..." : "FEED";
   String pullingStatus = pulling ? "PULLING" : "PULL";
   String pushingStatus = pushing ? "PUSHING" : "PUSH";
@@ -255,7 +300,7 @@ void getStates(bool smartthingReq)
   String g = "cosinus " + String(cosinuspushing ? "ANGLE PULL" : "ANGLE PUSH");
   String h = "feed " + feedStatus;
   String i = "deformation " + deformation;
-  String k = "irval1 IR_1=" + String(analogRead(IR1_pile));
+  String k = "irval1 IR_1=N/A"; //String(analogRead(IR1_pile));
   String l = "irval2 IR_2=" + String(analogRead(IR2_pile));
   String m = "load " + String(loading ? "LOADING" : "LOAD A CAN");
   String n = "slider " + String(map(speedValOpener, 0, 255, 0, 100));

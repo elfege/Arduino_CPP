@@ -22,6 +22,8 @@ unsigned long maxTimeout = millis();
 unsigned long previousMillisPURGE = 0;
 unsigned long previousMillisRun = 0;
 
+unsigned long MAX_RUN_AFTER_USER_REQUEST = 5000;
+
 
 int regularPurgeDuration = 70; // run for n seconds every n hours
 

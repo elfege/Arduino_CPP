@@ -35,6 +35,14 @@ const int temperatureCheckTimerDelay = 5 * 60 * 1000;
 unsigned long lastTemperatureCheck = temperatureCheckTimerDelay - 30000; // run getOutdoorTemperature() 30s after boot
 int outside_temperature = 0; 
 
+int offRequestsCount = 0;
+int heatRequest = 0;
+int coolRequest = 0;
+int outside_threshold_for_cooling = 40;
+int outside_threshold_for_heating = 65;
+
+unsigned long delayBtwCmds = 2 * 60 * 1000;
+
 const int DELAY_SEC_5mn = 600;
 
 boolean ShutDown = false;
@@ -48,6 +56,7 @@ boolean ntpFailed = false;
 boolean stopNtp = false;
 boolean fanCirculate = false;
 boolean bootRestore = false;
+boolean fanInsteadOfCool = 1; // works with fanInsteadOfCoolRTC 1/0 val
 
 bool RefreshPage = true;
 String str1;

@@ -1,4 +1,4 @@
-int const LED = D8; //   (GPIO9)S2
+int const LED = D4; // 
 int const Signal =  D5; // (IR LED OUTPUT)
 int const Asensor = A0;
 

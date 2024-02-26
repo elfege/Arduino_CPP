@@ -88,3 +88,4 @@ int fanMode;
 int program_step;
 int lastSetPointRTC;
 int lastTimeCmdSent = 1000 * 60 * 5; // 5 minutes delay must be valid after fresh reboot...
+int fanInsteadOfCoolRTC = 1; // RTC 1/0 true/false 

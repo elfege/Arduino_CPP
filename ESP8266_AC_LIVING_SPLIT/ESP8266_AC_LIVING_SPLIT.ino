@@ -1,4 +1,4 @@
-//DO NOT ATTEMPT TO USER OTHER LIBRARIES THAN THE ONE IN THIS INSTALL (arduino/libraries/IRremoteESP8266)
+// DO NOT ATTEMPT TO USER OTHER LIBRARIES THAN THE ONE IN THIS INSTALL (arduino/libraries/IRremoteESP8266)
 //- IT IS NOT THE SAME AS OFFICIAL (which doens't work with 32 bits integers)
 
 //*****************************************************************************
@@ -19,10 +19,13 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <SmartThingsESP8266WiFi_DUAL_SSID_3_HUBS.h>
-//#include <SmartThingsESP8266WiFi_DUAL_SSID_DUAL_HUB.h>
-//#include <SmartThingsESP8266WiFi_DUAL_SSID.h>
-//#include <SmartThingsESP8266WiFi.h>
-//#include <SmartThingsESP8266_WIFI_SSID.h>
+// #include <SmartThingsESP8266WiFi_DUAL_SSID_DUAL_HUB.h>
+// #include <SmartThingsESP8266WiFi_DUAL_SSID.h>
+// #include <SmartThingsESP8266WiFi.h>
+// #include <SmartThingsESP8266_WIFI_SSID.h>
+
+#include <ESP8266HTTPClient.h> // httpGet/Post requests
+#include <ArduinoJson.h>
 
 // call out function forward decalaration
 SmartThingsCallout_t messageCallout;
@@ -34,18 +37,18 @@ SmartThingsCallout_t messageCallout;
 WiFiUDP ntpUDP;
 
 // NTP server
-//World
-//char timeServer[] = "time.nist.gov"; // WIFI_SSID: ping fails for this one...
+// World
+// char timeServer[] = "time.nist.gov"; // WIFI_SSID: ping fails for this one...
 // Canada
 char timeServer[] = "0.ca.pool.ntp.org";
-//char timeServer[] = "1.ca.pool.ntp.org";
-//char timeServer[] = "2.ca.pool.ntp.org";
-//char timeServer[] = "3.ca.pool.ntp.org";
-// Europe
-//char timeServer[] = ""europe.pool.ntp.org";
+// char timeServer[] = "1.ca.pool.ntp.org";
+// char timeServer[] = "2.ca.pool.ntp.org";
+// char timeServer[] = "3.ca.pool.ntp.org";
+//  Europe
+// char timeServer[] = ""europe.pool.ntp.org";
 
-#define TIME_ZONE_OFFSET_HRS            (-4)
-#define NTP_UPDATE_INTERVAL_MS          60000L
+#define TIME_ZONE_OFFSET_HRS (-4)
+#define NTP_UPDATE_INTERVAL_MS 60000L
 
 // You can specify the time server pool and the offset (in seconds, can be
 // changed later with setTimeOffset() ). Additionaly you can specify the
@@ -62,8 +65,7 @@ NTPClient timeClient(ntpUDP, timeServer, (3600 * TIME_ZONE_OFFSET_HRS), NTP_UPDA
 //******************************************************************************************
 /// Wifi Terminal
 //******************************************************************************************
-#include "WiFiTerm.h"// OTA DEBUG LIB Wifi Terminal
-
+#include "WiFiTerm.h" // OTA DEBUG LIB Wifi Terminal
 
 //******************************************************************************************
 /// Arduino OTA (redundent but necessary for custom name for now)
@@ -71,7 +73,7 @@ NTPClient timeClient(ntpUDP, timeServer, (3600 * TIME_ZONE_OFFSET_HRS), NTP_UPDA
 #include <ArduinoOTA.h>
 
 /******************************************************************************************
- RTC memory storage (resists soft resets, not hard resets)... 
+ RTC memory storage (resists soft resets, not hard resets)...
  By default, the maximum number of variables is 32, it can be set to a higher value if needed
  More needs more RAM, (about 6 Bytes per Variable), is a definition in lib's .h file
  number is limited by total RTC memory
@@ -85,4 +87,4 @@ int lastOperation;
 int fanMode;
 int program_step;
 int lastSetPointRTC;
-int lastTimeCmdSent = 1000 * 60 * 5; // 5 minutes delay must be valid after fresh reboot... 
+int lastTimeCmdSent = 1000 * 60 * 5; // 5 minutes delay must be valid after fresh reboot...

@@ -46,7 +46,6 @@ const char MAIN_page[] PROGMEM = R"=====(
       <button id="appletvplaypause" style=width:100px;height:45px;margin-left:0;color:white;background-color:blue onclick="MainFunc('/appletvplaypause', id)"> PLAY/PAUSE </button>
       <button id="REFRESH" style=width:100px;height:45px;margin-left:0;color:white;background-color:green onclick="REFRESH()"> REFRESH </button>
       <button id="RESET" style=width:100px;height:45px;margin-left:0;color:white;background-color:grey onclick="MainFunc('/reset', id)"> RESET </button>
-      <button id="DEBUG" style=width:100px;height:45px;margin-left:0;color:white;background-color:grey onclick="MainFunc('/logs', id)"> DEBUG </button>
       <button id="CLEAR" style=width:100px;height:45px;margin-left:0;color:white;background-color:grey onclick="MainFunc('/clear', id)"> CLEAR </button>
     </div>
 
@@ -64,8 +63,10 @@ const char MAIN_page[] PROGMEM = R"=====(
     </div>
      <p> <textarea id="timeInfo" rows="1"  cols="50"  wrap="soft"> </textarea> </p>
      <p> <textarea id="macinfo"  rows="1"  cols="50"  wrap="soft"> </textarea> </p>
-     <p> <textarea id="debug"    rows="10" cols="100" wrap="soft"> </textarea> </p>
+     <p></p>
+     <iframe width="800" height="500" src="http://192.168.10.210/term.html" title="Serial Terminal Output" style="border:1px solid black;"></iframe> 
    
+
     </center>
   </body>
 
@@ -104,23 +105,7 @@ const char MAIN_page[] PROGMEM = R"=====(
 
     var message = "";
     var previousMessage = "";  
-    function getDebug(){
-      var xhr = new XMLHttpRequest();
-      var url = "/debug"
-      
-      xhr.open("GET", url, true);
-      xhr.send();  
-
-      xhr.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) 
-        {
-          var textarea = document.getElementById("debug")
-         textarea.innerHTML = this.responseText; 
-         textarea.scrollTop = textarea.scrollHeight;
-        }
-      };
-    };   
-    document.addEventListener('DOMContentLoaded', debug, true);
+   
 
     function MainFunc(name, id)
     {
@@ -136,7 +121,7 @@ const char MAIN_page[] PROGMEM = R"=====(
         }
       };   
     };
-    document.addEventListener('DOMContentLoaded', MainFunc, false);
+    
 
     function REFRESH()
     {
@@ -171,18 +156,16 @@ const char MAIN_page[] PROGMEM = R"=====(
         }
       };
     };   
-    document.addEventListener('DOMContentLoaded', getpowerstate, true);
+    
     
       //setTimeout(function(){location.reload()}, 10000);
       getMac();
-      getDebug();
       getTimeInfo()
 
-      setInterval(function(){getDebug();}, 10000);
       setInterval(function(){getTimeInfo();}, 10000);
       setInterval(function(){getpowerstate();}, 5000);
     
-    //document.addEventListener('DOMContentLoaded', MainFunc, false);
+    //
 
    
      

@@ -13,7 +13,7 @@ void getRvs() {
 }
 
 void getLeft() {
-  left(SPEED);
+  left(200);
 
   String state = MvtState;
   _server.send(200, "text/plain", state);
@@ -21,7 +21,7 @@ void getLeft() {
 
 
 void getRight() {
-  right(SPEED);
+  right(200);
 
   String state = MvtState;
   _server.send(200, "text/plain", state);
@@ -97,6 +97,8 @@ void initXMLhttp() {
 
   });
 
+  _server.on("/leftstep", left_step);
+  _server.on("/rightstep", right_step);
 
   _server.on("/charge", getChargeState);
   _server.on("/updatecharge", updateChargeState);
@@ -169,6 +171,15 @@ void initXMLhttp() {
     roam();
   });
 
+_server.on("/getpwd", []() {
+    String pwd = getpwd();
+    // Set CORS headers
+    _server.sendHeader("Access-Control-Allow-Origin", "*");
+    _server.sendHeader("Access-Control-Allow-Methods", "GET");
+    _server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+    // Send response
+    _server.send(200, "text/html", pwd);
+  });
   _server.on("/cancelstopall", []() {
     STOPALL = !STOPALL;
     String state = STOPALL ? "STOPALL ON" : "STOPALL OFF";

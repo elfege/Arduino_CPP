@@ -1,9 +1,12 @@
 
 void cool()
 {
-
-  if (millis() - lastTimeCmdSent > 1000 * 60 * 5 || currentMode != "cool")
+  coolRequest++;
+  _server.send(200, "text/html", "COOLING");
+  if (coolRequest >= 10 || currentMode != "cool")
   {
+    coolRequest = 0;
+    isOff = false;
     lastTimeCmdSent = millis();
     lastOperation = 1; // saveToRTC() called in serverAndHubs()
 
@@ -12,7 +15,7 @@ void cool()
     currentMode = "cool";
     term.println("cool()");
 
-    if (outside_temperature >= 60 || outside_temperature == 0)
+    if (outside_temperature >= outside_threshold_for_cooling || outside_temperature == 0 || !fanInsteadOfCool)
     {
       /* VERY POWER HUNGRY FEATURE!!! */
       irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
@@ -21,18 +24,20 @@ void cool()
       delay(DELAY_CMD);
       irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
       delay(DELAY_CMD);
+      irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
+      delay(DELAY_CMD);
       turbo();
 
-      indexArray = getIndex(lastSetPoint);
-      term.println("getting temp value from array of temperatures");
-      newTemp = TempArray[indexArray - 1][99];
-      term.println("sending SetTemp() command");
-      SetTemp(newTemp, "coolingSetpoint"); // don't send setpoint event if using boost setpoint
+      // indexArray = getIndex(lastSetPoint);
+      // term.println("getting temp value from array of temperatures");
+      // newTemp = TempArray[indexArray - 1][99];
+      // term.println("sending SetTemp() command");
+      // SetTemp(newTemp, "coolingSetpoint"); // don't send setpoint event if using boost setpoint
     }
     else
     {
-      // if outside temperature is below 60, don't trigger the compressor, just run the fan instead.
-      term.println("Outside temperature is below 60°F, running fan instead of cooling");
+      // if outside temperature is below 45, don't trigger the compressor, just run the fan instead.
+      term.println("Outside temperature is below " + String(outside_threshold_for_cooling) +"°F, running fan instead of cooling");
       irsend.sendRaw(FAN, sizeof(FAN) / sizeof(int), khz);
       delay(DELAY_CMD);
     }
@@ -44,13 +49,20 @@ void cool()
   }
   else
   {
-    term.println("Command already sent less than 5 minutes ago. Doing nothing to prevent cancel effect on unit");
+    term.println("Unit already in COOL mode");
   }
+
+  Refresh(); 
 }
 void heat()
 {
-  if (millis() - lastTimeCmdSent > 1000 * 60 * 5 || currentMode != "heat")
+  heatRequest++; 
+  _server.send(200, "text/html", "HEATING");
+  if (heatRequest >= 10 || currentMode != "heat")
   {
+    
+    heatRequest = 0;
+    isOff = false;
     lastTimeCmdSent = millis();
 
     lastOperation = 2; // saveToRTC() called in serverAndHubs()
@@ -60,7 +72,7 @@ void heat()
     currentMode = "heat";
     term.println("heat()");
 
-    if (outside_temperature < 60 || outside_temperature == 0)
+    if (outside_temperature < outside_threshold_for_heating || outside_temperature == 0)
     {
       /* VERY POWER HUNGRY FEATURE!!! */
       irsend.sendRaw(PUREHEAT, sizeof(PUREHEAT) / sizeof(int), khz); // PUREHEAT cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
@@ -69,18 +81,21 @@ void heat()
       delay(DELAY_CMD);
       irsend.sendRaw(PUREHEAT, sizeof(PUREHEAT) / sizeof(int), khz); // PUREHEAT cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
       delay(DELAY_CMD);
+      irsend.sendRaw(PUREHEAT, sizeof(PUREHEAT) / sizeof(int), khz); // PUREHEAT cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
+      delay(DELAY_CMD);
       turbo();
 
-      indexArray = getIndex(lastSetPoint);
-      term.println("getting temp value from array of temperatures");
-      newTemp = TempArray[indexArray - 1][99];
-      term.println("sending SetTemp() command");
-      SetTemp(newTemp, "heatingSetpoint"); // don't send setpoint event if using boost setpoint
+      // indexArray = getIndex(lastSetPoint);
+      // term.println("getting temp value from array of temperatures");
+      // newTemp = TempArray[indexArray - 1][99];
+      // term.println("sending SetTemp() command");
+      // SetTemp(newTemp, "heatingSetpoint"); // don't send setpoint event if using boost setpoint
     }
     else
     {
       // if outside temperature is above 60, don't trigger the heat pump, just run the fan instead.
-      term.println("Outside temperature is above 60°F, running fan instead of cooling");
+      term.println("Outside temperature is above 65°F, running fan instead of cooling");
+      fanCirculate = true;
       irsend.sendRaw(FAN, sizeof(FAN) / sizeof(int), khz);
       delay(DELAY_CMD);
     }
@@ -107,9 +122,10 @@ void heat()
   }
   else
   {
-    term.println("Command already sent less than 5 minutes ago. Doing nothing to prevent cancel effect on unit");
+    term.println("Unit already in heat mode"); 
   }
   // NB: turbo request is set by the SetTemp() function.
+  Refresh(); 
 }
 
 void turbo()
@@ -151,6 +167,8 @@ void Auto()
   send_to_hub("thermostatMode auto");
   send_to_hub("thermostatFanMode auto");
   send_to_hub("fanspeed auto");
+
+  Refresh(); 
 }
 
 void acON()
@@ -173,14 +191,18 @@ void acON()
 
   send_to_hub("switch on");
   send_to_hub("thermostatFanMode auto");
+  Refresh();
 }
 
 void acOff()
 {
-  if (lastActiveMode != "off")
+  offRequestsCount ++;
+
+  if (lastActiveMode != "off" || millis() - lastTimeCmdSent > delayBtwCmds || offRequestsCount > 5)
   {
     lastOperation = 0; // saveToRTC() called in serverAndHubs()
-    lastActiveMode = "off";
+    
+    lastTimeCmdSent = millis();
 
     currentMode = "off";
     send_to_hub("switch off");
@@ -190,8 +212,14 @@ void acOff()
     ledToggled = false;
     isOff = true;
 
-    if (millis() - offRequestMillis > fanDurationWhenOff)
+    
+
+    if (millis() - offRequestMillis > fanDurationWhenOff || offRequestsCount > 5)
     {
+      
+      lastActiveMode = "off";
+      offRequestsCount = 0;
+
       irsend.sendRaw(OFF, sizeof(OFF) / sizeof(int), khz); // works on C&H...
       delay(DELAY_CMD);
       irsend.sendRaw(OFF, sizeof(OFF) / sizeof(int), khz); // works on C&H...
@@ -200,6 +228,8 @@ void acOff()
       delay(DELAY_CMD);
       irsend.sendRaw(OFF, sizeof(OFF) / sizeof(int), khz); // works on C&H...
       delay(DELAY_CMD);
+
+      
     }
     else
     {
@@ -213,6 +243,7 @@ void acOff()
   }
 
   delay(100);
+  Refresh(); 
 }
 
 void off_override()
@@ -523,7 +554,7 @@ void SetTocurrentMode()
 
 void send_to_hub(String var)
 {
-  _server.send(200, "text/html", var);
+  // _server.send(200, "text/html", var);
   term.println(var + " at " + String(TimeInfos()));
   smartthing.send(var); // send the current value to smartthings
 }

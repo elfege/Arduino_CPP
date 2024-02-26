@@ -85,8 +85,8 @@ int hastriedOBS = 0;
 int method = 0; // binary tree A.I.
 
 int lastTotal = 0; // for OTA debug
-int sPeeD = 180; // default docking speed
-int startingSpeed = sPeeD;
+int docking_speed = 180; // default docking speed
+int startingSpeed = docking_speed;
 int IRlimit = 500;
 
 int positive = 0; // confirmation test for stuck()

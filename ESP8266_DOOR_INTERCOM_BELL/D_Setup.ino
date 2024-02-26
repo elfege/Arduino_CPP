@@ -67,6 +67,8 @@ void setup() {
 
   Blink(3, 500);
 
+  term.println("REBOOT DONE");
+
 }
 
 void pinConfig(){

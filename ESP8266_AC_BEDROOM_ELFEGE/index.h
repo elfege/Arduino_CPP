@@ -46,6 +46,7 @@ const char MAIN_page[] PROGMEM = R"=====(
                 <button class="btn btn-outline-success m-1" id="STOP" onclick="MainFunc('/stopAll', id)">STOP
                     ACT</button>
                 <button class="btn btn-outline-success m-1" id="TURBO" onclick="MainFunc('/turbo', id)"> TURBO </button>
+                <button class="btn btn-outline-primary m-1" id="COOL-w-FAN" onclick="MainFunc('/cool-w-fan', id)"> COOL-w-FAN </button>
             </div>
         </div>
         <div class="row">
@@ -143,7 +144,7 @@ const char MAIN_page[] PROGMEM = R"=====(
         xhr.send();
         xhr.onreadystatechange = function () {
             if (this.readyState == 4 && this.status == 200) {
-                document.getElementById("state").innerText = this.responseText;
+                document.getElementById(id).innerText = this.responseText;
                 console.log(xhr.responseText);
             }
         };

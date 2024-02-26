@@ -2,6 +2,7 @@ void loop() {
 
   if (!OTArequest) {
     MainFunctions();
+    debugHandler();
   }
   ArduinoOTA.handle();
 

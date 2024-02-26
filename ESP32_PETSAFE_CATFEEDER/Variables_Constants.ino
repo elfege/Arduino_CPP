@@ -15,7 +15,7 @@ int defaultProgramDelay = 6; // default value in hours 0 means never (condition 
 unsigned long programDelay = defaultProgramDelay * 1000 * 60 * 60;
 
 int wtdpin;
-int qty = 3;
+int qty = 1;
 int MaxQty = 15;
  
 boolean isDebugEnabled;    // enable or disable debug in this example

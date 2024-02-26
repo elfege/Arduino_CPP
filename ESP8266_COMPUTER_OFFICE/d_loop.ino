@@ -1,4 +1,5 @@
-void loop() {
+void loop()
+{
   if (!StopAll)
   {
     master();
@@ -7,34 +8,35 @@ void loop() {
   {
     ArduinoOTA.handle(); // also handled by smartthings ESP8266 library
   }
-  if(millis() - millisHeartBit >= 1000)
+  if (millis() - millisHeartBit >= 1000)
   {
-//    Serial.println("state = "+lastState);
+    //    term.println("state = "+last_state);
     millisHeartBit = millis();
-    digitalWrite(LED, !digitalRead(LED)); 
+    digitalWrite(LED, !digitalRead(LED));
   }
   yield();
   delay(10);
 }
 
-void master() {
+void master()
+{
   servers();
-  
-  if (!isOn() && lastState == "on")
+
+  if (!is_on() && last_state == "on")
   {
-    Serial.println("UPDATE 1");
-    lastState = "off";
-    buildDebug("switch off");
-    buildDebug("computer sleeping");
-    buildDebug("status sleeping");
+    term.println("UPDATE 1");
+    last_state = "off";
+    send_data("switch off");
+    send_data("computer sleeping");
+    send_data("status sleeping");
   }
-  if (isOn() && lastState == "off")
+  if (is_on() && last_state == "off")
   {
-    Serial.println("UPDATE 2");
-    lastState = "on";
-    buildDebug("switch on");
-    buildDebug("computer running");
-    buildDebug("status running");
+    term.println("UPDATE 2");
+    last_state = "on";
+    send_data("switch on");
+    send_data("computer running");
+    send_data("status running");
   }
 
   // refresh statuses every x minutes
@@ -45,7 +47,7 @@ void master() {
     userOverride = false; // reset this value
     String var = "Override Inactive";
     _server.send(200, "text/html", var);
-    buildDebug(var);
+    send_data(var);
   }
   if (millis() - previousMillis_override_RESET > OTHER_DELAY * 1000)
   {
@@ -53,7 +55,7 @@ void master() {
     userOverride = false; // reset this value
     String var = "Override Inactive";
     _server.send(200, "text/html", var);
-    buildDebug(var);
+    send_data(var);
   }
 }
 
@@ -61,4 +63,5 @@ void servers()
 {
   _server.handleClient();
   smartthing.run();
+  term.handleClient();
 }

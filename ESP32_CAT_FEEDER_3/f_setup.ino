@@ -3,7 +3,7 @@ void setup() {
   delay(1);
   Blink(3, 50);
 
-  
+
 
   //******************************************************************************************
   // WIFI & http
@@ -14,7 +14,7 @@ void setup() {
   term.begin(_server);
   initXMLhttp();
   OTAconfig();
-  
+
 
   //******************************************************************************************
   // Serial
@@ -22,7 +22,7 @@ void setup() {
   // Serial.begin(115200); // NOT WITH ST INITIALIZED!
   // Serial.println("Booting sequence started...");
   term.link(Serial);  //optional : echo every print() on Serial
- 
+
 
   //******************************************************************************************
   // Analog calibration
@@ -43,19 +43,19 @@ void setup() {
   pinMode(OPENER_B, OUTPUT);
   pinMode(OPEN_ENABLE_PWM, OUTPUT);
 
-  // pinMode(SMALL_PUSHER_A, OUTPUT);  
+  // pinMode(SMALL_PUSHER_A, OUTPUT);
   // pinMode(SMALL_PUSHER_B, OUTPUT);
 
   ESP32PWM::allocateTimer(0);
-	ESP32PWM::allocateTimer(1);
-	ESP32PWM::allocateTimer(2); 
-	ESP32PWM::allocateTimer(3);
-  SMALL_PUSHER.setPeriodHertz(50);      // Standard 50hz servo
-  
+  ESP32PWM::allocateTimer(1);
+  ESP32PWM::allocateTimer(2);
+  ESP32PWM::allocateTimer(3);
+  SMALL_PUSHER.setPeriodHertz(50);  // Standard 50hz servo
+
 
   pinMode(vertPush_A, OUTPUT);
   pinMode(vertPush_B, OUTPUT);
-  pinMode(wheel, INPUT);
+  pinMode(wheel, INPUT_PULLUP);
 
   pinMode(COSINUS_A, OUTPUT);
   pinMode(COSINUS_B, OUTPUT);
@@ -65,7 +65,7 @@ void setup() {
   pinMode(IR1_pile, INPUT);
   pinMode(IR2_pile, INPUT);
 
-  pinMode(candown, INPUT); // connected to a pulldown resistor
+  pinMode(candown, INPUT);  // connected to a pulldown resistor
 
   pinMode(lockSensor, INPUT_PULLUP);
   pinMode(canSensor, INPUT_PULLUP);
@@ -97,12 +97,16 @@ void setup() {
   term.println("SSID: " + String(WiFi.SSID()));
   term.println("RSSI: " + String(WiFi.RSSI()));
   term.println("SETUP SUCCESSFUL!");
-  Blink(3, 250);
-  unlock();        // in case it's holding a can, must be unlocked before pulling up... otherwise this could make a big big mess! :)
-  verticalPull();  // needed to initialize its boolean
-  cosinusPull(); 
-  smallPull(); // needed to initialize its boolean
   
+  // unlock();        // in case it's holding a can, must be unlocked before pulling up... otherwise this could make a big big mess! :) .. problematic when loses WiFi runs over and over when lock sensor fails.
+  verticalPull();  // needed to initialize its boolean
+  cosinusPull();
+  smallPull();  // needed to initialize its boolean
+
+  simpleStop();
+
+  term.println("CAT FEEDER IS READY");
+  Blink(3, 250);
 }
 
 void EverythingInit() {
@@ -131,7 +135,8 @@ void OTAconfig() {
 
   ArduinoOTA
     .onStart([]() {
-      stopAll = true;
+      readyOTA = true;
+      stopAll = true; 
       term.println("UPDATE STARTED... Please, wait...");
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH)
@@ -150,12 +155,11 @@ void OTAconfig() {
     })
     .onProgress([](unsigned int progress, unsigned int total) {
       term.printf("Progress: %u%%\r", (progress / (total / 100)), "\n");
-      term.println();
       digitalWrite(LED, !digitalRead(LED));
       term.handleClient();
     })
     .onError([](ota_error_t error) {
-      OTArequest = false;
+      readyOTA = false;
       term.printf("Error[%u]: ", error);
       if (error == OTA_AUTH_ERROR) term.println("Auth Failed");
       else if (error == OTA_BEGIN_ERROR) term.println("Begin Failed");
@@ -165,4 +169,7 @@ void OTAconfig() {
       //    Reset();// no more hard reset in this function
     });
   ArduinoOTA.begin();
+
+  // create a FreeRTOS task
+  // xTaskCreate(OTAHandleTask, "OTA_Handle", 4096, NULL, tskIDLE_PRIORITY + 1, NULL);
 }

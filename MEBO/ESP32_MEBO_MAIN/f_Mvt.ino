@@ -133,6 +133,12 @@ void left(int v) {
   MvtStateMillis = millis();
 }
 
+void left_step(){
+  left(200);
+  delay(50);
+  STOP();
+}
+
 void right(int v) {
 
   //term.println("moving right" );
@@ -164,6 +170,12 @@ void right(int v) {
   //term.println("RIGHT");
 
   MvtStateMillis = millis();
+}
+
+void right_step(){
+  right(200);
+  delay(50);
+  STOP();
 }
 
 void simpleLeft(int v) {

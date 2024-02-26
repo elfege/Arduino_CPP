@@ -1,8 +1,7 @@
-void feed()
-{
+void feed() {
   unsigned long Start;
   problem = false;
-  feeding = true;
+  // feeding = true; push() methods needs this value to be false
   stopped = false;
   canDetectedByLimitSwitchDuringLoad = false;
 
@@ -13,26 +12,26 @@ void feed()
   term.println("************************************************************************");
 
   term.println("PULLING SMALL PUSHER...");
-  pull();        // start pulling out master arm
-  cleanOpener(); // takes 10 seconds, giving enough time to master arm to retract
-  smallPull();   // timed function
+  pull();           // start pulling out master arm
+  feeding = false;  // allow proper arm pusherRetractCheck (otherwise arm is stuck at the bottom)
+  // cleanOpener();   // giving enough time to master arm to retract
 
-  ledcWrite(pwmChannelActuator, 0); // stop the arm
+  feeding = true;  // must not be true before cleaning is done or master arm will pull all the way
+  smallPull();     // timed function
+
+  ledcWrite(pwmChannelActuator, 0);  // stop the arm
 
   // it can happen  that a can is still loaded
   // Make sure this is taken care of, otherwise the push process might take this faulty
 
   stopped = false;
-  masterisout = true; // make sure boolean is set to true so smallpush can work
+  masterisout = true;  // make sure boolean is set to true so smallpush can work
   term.println("CLEARING THE WAY");
-  smallPush(); // clear the area as much as possible
+  smallPush();  // clear the area as much as possible
   smallPull();
   term.println("LOADING AREA CLEARED!");
 
   term.println("*************************************************************************");
-  term.println("                    FEEDING PROCESS CAN NOW START                        ");
-  term.println();
-  term.println();
   term.println("                          LOADING A CAN                                  ");
   term.println("*************************************************************************");
 
@@ -45,10 +44,11 @@ void feed()
   term.println("                     POSITIONING OPENER ONTO THE CAN                     ");
   term.println("*************************************************************************");
   stopped = false;
-  if (!problem && (canInPosition() || canDetectedByLimitSwitchDuringLoad || canDown())) /* || hasSpun)*/
+
+  if (!problem && (canInPosition() || canDetectedByLimitSwitchDuringLoad))  // || canDown())) /* || hasSpun)*/ canDown() is too early and wasn't meant for that initially=> intended for lid release (TODO)
   {
     term.println("CAN IN POSITION AND READY FOR OPENING OPERATION TO START");
-    unlock(); // be on the safe side
+    unlock();  // be on the safe side
 
     term.println("SETTING OPENER ONTO THE CAN");
     verticalPush();
@@ -57,11 +57,8 @@ void feed()
     term.println("                          OPENING A CAN                                 ");
     term.println("************************************************************************");
     openCan();
-  }
-  else
-  {
-    if (problem)
-    {
+  } else {
+    if (problem) {
       term.println("SOMETHING WENT HORRIBLY WRONG... A CAN MAY BE STUCK!");
     }
     term.println("CAN NOT DETECTED!");
@@ -74,8 +71,7 @@ void feed()
   // give it 2 seconds for food content to rest inside
   term.println("2 SECONDS RESTING");
   Start = millis();
-  while (!stopped && millis() - Start < 2000)
-  {
+  while (!stopped && millis() - Start < 2000) {
     pauseHandler("");
     mainHandler();
   }
@@ -84,7 +80,7 @@ void feed()
   /*                          PULL UP                                       */
   /**************************************************************************/
 
-  verticalPull(); // will unlock the can (can no longer allow holding it upward due to wheel's spring system)
+  verticalPull();  // will unlock the can (can no longer allow holding it upward due to wheel's spring system)
 
   /**************************************************************************/
   /*                          EXTRACTION                                    */
@@ -95,105 +91,95 @@ void feed()
 
   // pull(); // will be pulled at next feed
 }
-void load()
-{
+void load() {
   term.println("loading a can...");
   lastActionMillis = millis();
   stopped = false;
   loading = true;
   problem = false;
 
-  unlock(); // make sure can opener is unlocked
+  unlock();  // make sure can opener is unlocked
 
   int attempt = 0;
   int maxattempts = 3;
   bool deformation_occured = false;
   deformOverride = true;
 
-  int maxLoadTime = 55000;    // if reached, it's a fail => ONLY CONDITION WHEN REACHED is when there's been some serious deformation.
-  int optimaLoadTime = 33000; // first rule timer: if any of the 2 sensors fails, operation can go on.
+  int maxLoadTime = 55000;     // if reached, it's a fail => ONLY CONDITION WHEN REACHED is when there's been some serious deformation.
+  int optimaLoadTime = 37000;  // first rule timer: if any of the 2 sensors fails, operation can go on.
 
   // make sure the master arm is in proper position
-  initialize_Master_Arm(); // required for timer's precision.
+  initialize_Master_Arm();  // required for timer's precision.
   stopped = false;
 
   push();
   unsigned long load_duration = 0;
   unsigned long Start = millis();
-  while (!canInPosition() && millis() - Start < maxLoadTime && millis() - Start < optimaLoadTime && !stopped) // we use timer as first anf foremost criteria (in case of sensors failure)
+  while (!canInPosition() && millis() - Start < maxLoadTime && millis() - Start < optimaLoadTime && !stopped)  // we use timer as discriminatory criterion (in case of sensors failure)
   {
     pauseHandler("push");
 
-    if (millis() - load_duration >= 1000)
-    {
+    if (millis() - load_duration >= 1000) {
       term.println("load push duration:" + String((millis() - Start) / 1000) + " seconds.");
       load_duration = millis();
     }
     // detect chassis deformation
-    if (deformed())
-    {
-      unsigned long deform_Duration = millis(); // record starting point
+    if (deformed()) {
+      unsigned long deform_Duration = millis();  // record starting point
       deformation_occured = true;
-      int deform_Time_Offset = 2000; // time allowance from deformation detection until any action is taken. If deformation isn't felt after this time, resume normal operation and, otherwise, pull back.
+      int deform_Time_Offset = 2000;  // time allowance from deformation detection until any action is taken. If deformation isn't felt after this time, resume normal operation and, otherwise, pull back.
       attempt++;
       term.println("----------------------------------------------------------------");
       term.println("       **         CHASSIS DEFORMATION DETECTED!        **       ");
       term.println("----------------------------------------------------------------");
       unsigned long s = millis();
-      while (millis() - s < deform_Time_Offset && deformed() && !stopped) // give it n seconds in case it goes through
+      while (millis() - s < deform_Time_Offset && deformed() && !stopped)  // give it n seconds in case it goes through
       {
         //        pauseHandler(""); // NO PAUSE HERE, EVER... major safety concern!
         // mainHandler(); No handler of any kind either - any lagging network communication would make the arm crush the can completely!
         yield();
         delay(10);
       }
-      delay(50); // necessary to prevent false positives returned by deformed() due to Analog noise
+      delay(50);  // necessary to prevent false positives returned by deformed() due to Analog noise
 
       // if still deformed, proceed with retracting
-      if (deformed() && !stopped)
-      {
+      if (deformed() && !stopped) {
         mainArmPull();
       }
       s = millis();
-      while (millis() - s < deform_Time_Offset && deformed() && !stopped)
-      {
+      while (millis() - s < deform_Time_Offset && deformed() && !stopped) {
         pauseHandler("mainArmPull");
         mainHandler();
       }
 
-      if (millis() - s >= deform_Time_Offset && attempt >= maxattempts)
-      {
+      if (millis() - s >= deform_Time_Offset && attempt >= maxattempts) {
         stop();
         term.println("something's wrong, stopping...");
         problem = true;
         problemMillis = millis();
         return;
       }
-      push();                              // once done, resume with push operation
-      Start += millis() - deform_Duration; // compensate for lost time (matters for max duration to be effective)
+      push();                               // once done, resume with push operation
+      Start += millis() - deform_Duration;  // compensate for lost time (matters for max duration to be effective)
     }
+
     mainHandler();
   }
   deformOverride = false;
 
-  if (canInPosition() || millis() - Start >= optimaLoadTime)
-  {
-    term.println(String(millis() - Start >= optimaLoadTime ? "optimal time reached! Everything seems ok" : "limit switch reached, there could be a problem... "));
+  if (canInPosition() || millis() - Start >= optimaLoadTime) {
+    term.println(String(millis() - Start >= optimaLoadTime ? "optimal time reached! Everything seems ok" : "limit switch reached... "));
     canDetectedByLimitSwitchDuringLoad = true;
   }
 
-  if (stopped)
-  {
+  if (stopped) {
     term.println("OPERATION TERMINATED AT USER'S REQUEST...");
     problem = true;
     return;
   }
-  if (millis() - Start > maxLoadTime)
-  {
+  if (millis() - Start >= maxLoadTime) {
     term.println("OPERATION FAILED! (passed max load time)");
-  }
-  else
-  {
+  } else {
     term.println("PUSH DONE!");
   }
 
@@ -205,47 +191,43 @@ void load()
 
   loading = false;
 }
-void openCan()
-{
+void openCan() {
   lastActionMillis = millis();
   canopening = true;
   term.println("OPENING A CAN");
   canForward();
   unsigned long Start = millis();
   unsigned long timer = millis();
-  unsigned long interval = millis(); // interval between mandatory readjustments
+  unsigned long interval = millis();  // interval between mandatory readjustments
   // int intervalLimit = 30000;         // minimum time allowed without readjusting // DEPRECATED
-  int duration = 120000; // needs long time to desold the lid, but also not too long to prevent damaging the blade too fast
+  int duration = 150000;  // needs long time to desold the lid, but also not too long to prevent damaging the blade too fast
   int absoluteMaxDuration = 240000;
   int noSpinErrors = 0;
-  int maxSpinErrors = 7; // byond this number of no spin events, either the can is open (hence the no spin), or it's most likely that it has too many deformations.
-  while (!stopped && millis() - Start < duration && millis() - Start < absoluteMaxDuration && noSpinErrors < maxSpinErrors)
-  {
+  int maxSpinErrors = 7;  // beyond this number of no spin events, either the can is open (hence the no spin), or it's most likely that it has too many deformations, or the sensor is faulty.
+
+  // Set to 3 if spin sensor fails and comment out '&& noSpinErrors < maxSpinErrors'
+  while (!stopped && millis() - Start < duration && millis() - Start < absoluteMaxDuration /*&& noSpinErrors < maxSpinErrors*/) {
     pauseHandler("canForward");
     // wheelSpinning();
     mainHandler();
-    if (!spin || millis() - timer > 4000)
-    {
+
+    // add '&& noSpinErrors < maxSpinErrors' here if the same statement above is commented out,
+    // comment it out here if it's not commented out above.
+    // When commented out in the line above, and not here, the device will stop checking for spin errors and continue
+    // The spin sensor being a relatively fragile and exposed moving part, the system should be able to ignore it after a certain point
+    // instead of throwing an error an uselessly losing remaining functionality.
+
+    if (!spin || millis() - timer > 2000 && noSpinErrors < maxSpinErrors) {
       term.println("CHECKING SPIN STATUS...");
       unsigned long s = millis();
       term.println("total elapsed time: " + String((millis() - Start) / 1000) + " seconds");
-      while (!spin && millis() - s < 1000 && !stopped) // wait for N ms as confirmation test
+      while (!spin && millis() - s < 1500 && !stopped)  // wait for N ms as confirmation test to avoid false positives due to can's deformations
       {
-        if (paused)
-        {
-          unsigned long pauseStart = millis();
-          pauseHandler("canForward");
-          s = millis();
-          s += pauseStart;
-        }
         mainHandler();
       }
-      if (!spin) // if still not spinning, execute the recovery process
+      if (!spin)  // if still not spinning, execute the recovery process
       {
-        if (!spin)
-        {
-          noSpinErrors++;
-        }
+        noSpinErrors++;
         term.println("no spin events = " + String(noSpinErrors));
         unsigned long NoSpinTime = millis();
         unlock();
@@ -256,28 +238,36 @@ void openCan()
         unsigned long elapsed = millis() - NoSpinTime;
         duration += elapsed;
         interval = millis();
-      }
-      else
-      {
+      } else {
         term.println("FALSE ALARM, SPIN Ok!");
       }
       timer = millis();
+    } else if (!spin && noSpinErrors >= maxSpinErrors) {
+      term.println("No longer checking on spin errors and continuing operation while ignoring spin sensor");
     }
   }
   unlock();
   verticalUp();
   delay(500);
   verticalStop();
-  if (millis() - Start >= absoluteMaxDuration + 500 || noSpinErrors >= maxSpinErrors)
-  {
+
+  // ERROR HANDLER. Comment it out if spin sensor fails
+  if (millis() - Start >= absoluteMaxDuration + 500 || noSpinErrors >= maxSpinErrors) {
     problem = true;
     problemMillis = millis();
     term.println("PLEASE MAKE SURE TO USE UNDAMAGED CANS...");
   }
   canopening = false;
 }
-void extract()
-{
+void open_free() {
+  term.println("OPEN FREE!");
+  canForward();
+  unsigned long Start = millis();
+  while (!stopped && millis() - Start < 60000) {
+    mainHandler();
+  }
+}
+void extract() {
   extractionStart = millis();
 
   term.println("EXTRACTING");
@@ -287,14 +277,14 @@ void extract()
   stopped = false;
   extracting = true;
 
-  unlock();       // free the can from the opener
-  verticalPull(); // pull opener away from can / this function has its own smart timing
-  push();         // extract the can
+  unlock();  // free the can from the opener
+  // freeCanLid();  // will attempt to detach lid by dropping the can, then unlock and pull back up.// too messy
+
+  push();  // extract the can
 
   unsigned long Start = millis();
   // push for at least 30 seconds and then use limit switch (minimum of 30 seconds in case old can was still there)
-  while (millis() - Start < 30000 && !stopped)
-  {
+  while (millis() - Start < 30000 && !stopped) {
     pauseHandler("push");
     mainHandler();
   }
@@ -302,72 +292,60 @@ void extract()
   term.println("EXTRACTION DONE!");
   extracting = false;
 
-  stop(); // confirm just in case some other process might have been in await mode
+  stop();  // confirm just in case some other process might have been in await mode
 
-  pull(); // MUST be done before small pusher can take over
+  pull();  // MUST be done before small pusher can take over
   Start = millis();
-  while (!pusherRetracted() && !stopped && millis() - Start < 15000)
-  { // just 15 secs timer to free the way for the small pusher
-    if (paused)
-    {
-      pauseHandler("pull");
-      Start = millis();
-      pull();
-    }
+  while (!pusherRetracted() && !stopped && millis() - Start < 15000) {  // just 15 secs timer to free the way for the small pusher
     mainHandler();
   }
   // arm continues pulling and is managed by pusherRetractCheck() (called from mainhandler)
 
-  smallPush(); // has its own timer
-  smallPull(); // has its own timer
+  smallPush();  // has its own timer
+  // smallPull(); // has its own timer // KEEP IT OUT to support cats pushing the lid over.
 }
 
-/************* MASTER ARM**********/
-void pullMasterRelease() // pull master arm back from its maxed out and limit switched triggered position
+/************* MASTER ARM **********/
+void pullMasterRelease()  // pull master arm back from its maxed out and limit switched triggered position
 {
-  if (canInPosition())
+  // if (canInPosition())
+  // {
+  term.println("PULLING ARM BACK 1 SECOND");
+  mainArmPull();
+  unsigned long Start = millis();
+  while ((eatingZonePushed() || millis() - Start < 2500) && !stopped)  // never set the pull back to more than 4 seconds, we need the arm for the unload operation
   {
-    term.println("PULLING ARM BACK 4 SECONDS");
-    mainArmPull();
-    unsigned long Start = millis();
-    while ((eatingZonePushed() || millis() - Start < 4000) && !stopped) // don't pull more than 4 seconds, we need the arm for the unload operation
-    {
-      if (paused)
-      {
-        pauseHandler("mainArmPull");
-        Start = millis();
-      }
-      mainHandler();
+    if (paused) {
+      pauseHandler("mainArmPull");
+      Start = millis();
     }
-    simpleStop();
+    mainHandler();
   }
+  simpleStop();
+  // }
 }
-void initialize_Master_Arm() // reset master arm to its starting point,  a trigger & release limit switch method.
+void initialize_Master_Arm()  // reset master arm to its starting point,  a trigger & release limit switch method.
 {
   unsigned long Start;
-  if (!pusherRetracted())
-  {
-    adjusting = true; // disable pusherRetractCheck() handler
+  if (!pusherRetracted()) {
+    adjusting = true;  // disable pusherRetractCheck() handler
     pull();
     term.println("RETRACTING");
     Start = millis();
-    while (!pusherRetracted() && !stopped && millis() - Start < 60000)
-    {
+    while (!pusherRetracted() && !stopped && millis() - Start < 60000) {
       pauseHandler("pull");
       mainHandler();
     }
   }
   push();
   Start = millis();
-  while (pusherRetracted() && !stopped && millis() - Start < 60000)
-  {
+  while (pusherRetracted() && !stopped && millis() - Start < 60000) {
     pauseHandler("push");
     mainHandler();
   }
-  adjusting = false; // enable pusherRetractCheck() handler
+  adjusting = false;  // enable pusherRetractCheck() handler
 }
-void push()
-{
+void push() {
   term.println("PUSHING");
   lastActionMillis = millis();
   masterisout = true;
@@ -378,15 +356,13 @@ void push()
   digitalWrite(ACTUATOR_A, 0);
   digitalWrite(ACTUATOR_B, 1);
 }
-void mainArmPull()
-{
+void mainArmPull() {
   term.println("mainArmPull()");
   stopped = false;
   lastActionMillis = millis();
   pull();
 }
-void pull()
-{
+void pull() {
   term.println("PULLING");
   pulling = true;
   pushing = false;
@@ -399,22 +375,18 @@ void pull()
 }
 
 /************* SMALL ARM**********/
-void smallPush()
-{
+void smallPush() {
   term.println("Small Push Request");
   smallisout = true;
   lastActionMillis = millis();
   stopped = false;
-  if (masterisout)
-  {
-    pwm.attachPin(servo_pwm, 10000); // 10khz
+  if (masterisout) {
+    pwm.attachPin(servo_pwm, 10000);  // 10khz
     SMALL_PUSHER.attach(SMALL_PUSHER_PIN);
     SMALL_PUSHER.write(140);
     unsigned long Start = millis();
-    while (millis() - Start < 8000 && !stopped)
-    {
-      if (paused)
-      {
+    while (millis() - Start < 8000 && !stopped) {
+      if (paused) {
         SMALL_PUSHER.detach();
         pauseHandler("");
         Start = millis();
@@ -432,28 +404,31 @@ void smallPush()
     // }
     SMALL_PUSHER.detach();
     pwm.detachPin(servo_pwm);
-  }
-  else
-  {
+  } else {
     term.println("PULL MASTER ARM FIRST!");
     Blink(10, 100);
   }
 }
-void smallPull()
-{
+void smallPushNoTimer() {
+  pwm.attachPin(servo_pwm, 10000);  // 10khz
+  SMALL_PUSHER.attach(SMALL_PUSHER_PIN);
+  SMALL_PUSHER.write(140);
+}
+void stopSmallPush() {
+  SMALL_PUSHER.detach();
+}
+void smallPull() {
   term.println("Small Pull Request");
   smallisout = false;
   lastActionMillis = millis();
   stopped = false;
 
-  pwm.attachPin(servo_pwm, 10000); // 10khz
+  pwm.attachPin(servo_pwm, 10000);  // 10khz
   SMALL_PUSHER.attach(SMALL_PUSHER_PIN);
   unsigned long Start = millis();
   SMALL_PUSHER.write(50);
-  while (millis() - Start < 8000 && !stopped)
-  {
-    if (paused)
-    {
+  while (millis() - Start < 8000 && !stopped) {
+    if (paused) {
       SMALL_PUSHER.detach();
       pauseHandler("");
       Start = millis();
@@ -475,210 +450,192 @@ void smallPull()
 
 /***********CAN OPENER*************/
 
-void canForward()
-{
+void canForward() {
+  term.println("CAN OPENER RUNNING FWD");
   lastActionMillis = millis();
   ledcWrite(pwmChannelCanOpener, speedValOpener);
   digitalWrite(OPENER_B, 0);
   digitalWrite(OPENER_A, 1);
 }
-void canBackWard()
-{
+void canBackWard() {
   ledcWrite(pwmChannelCanOpener, speedValOpener);
   digitalWrite(OPENER_B, 1);
   digitalWrite(OPENER_A, 0);
 }
-void canStop()
-{
+void canStop() {
   ledcWrite(pwmChannelCanOpener, 0);
   digitalWrite(OPENER_B, 0);
   digitalWrite(OPENER_A, 0);
 }
-void lock()
-{
+void lock() {
   term.println("LOCKING");
   canForward();
   // ledcWrite(pwmChannelCanOpener, maxSpeedOpener);
   stopped = false;
   unsigned long Start = millis();
-  while (millis() - Start < 3000 && !canLocked() && !stopped)
+  while (millis() - Start < 2000 && !stopped) /*&& !canLocked() timer only is safer*/
   {
-    if (paused)
-    {
-      pauseHandler("");
-      Start = millis();
-    }
+
     mainHandler();
   }
   simpleStop();
 }
-void unlock()
-{
+void unlock() {
   term.println("UNLOCKING");
   canBackWard();
   ledcWrite(pwmChannelCanOpener, maxSpeedOpener);
   stopped = false;
   unsigned long Start = millis();
-  while (millis() - Start < 3000 && canLocked() && !stopped)
+  while (millis() - Start < 1500 && !stopped) /*&& canLocked() timer only is safer*/
   {
-    if (paused)
-    {
-      pauseHandler("canBackWard");
-      Start = millis();
-    }
     mainHandler();
   }
   simpleStop();
 }
+void slightUnlock() {
+  term.println("SLIGHT UNLOCKING");
+  canBackWard();
+  stopped = false;
+  unsigned long Start = millis();
+  while (millis() - Start < 800 && !stopped) /*&& canLocked() timer only is safer*/
+  {
+    mainHandler();
+  }
+  simpleStop();
+}
+void freeCanLid() {
 
+  for (int i = 0; i < 3; i++) {
+    verticalPush();  // put it back down (HAS INNER TIMER)
+    lock();
+
+    verticalUpStep(200, 10);  // param1:steps, param2: millis // slightly pull up the can while holding it (locked) (NO INNER TIMER)
+    wait(2000);
+    slightUnlock();      // unlock just enough in a vague attempt to hold the lid and release the can
+    smallPushNoTimer();  // push the can in an attempt to desolidarize it from the lid
+    // verticalDownStep(200, 10); // push back downcase stuck upward
+
+    delay(3500);  // not using wait, must be exactly n seconds
+    smallPull();  // inner 8 seconds timer
+  }
+
+  verticalPull();  // retract (includes unlock() and therefore releases the lid when the can should be further away)
+  cosinusPull();
+}
 /***********VERTICAL ACTUATORS*************/
-void verticalPush()
-{
-  //  if (!canDown())
-  //  {
-  //    term.println("DO NOT BRING THE OPENER DOWN WITHOUT A CAN TO HOLD THE WHEEL!!");
-  //    Blink(5, 50);
-  //    stop();
-  //    return;
-  //  }
+void verticalPush() {
+
   term.println("VERTICAL PUSH");
-  overrideImpact = true; // disable impact handler
+  overrideImpact = true;  // disable impact handler
   lastActionMillis = millis();
   goingdown = true;
   problem = false;
   stopped = false;
 
   unsigned long Start = millis();
-
-  cosinusPush(); // always push a bit
+  term.println("VERTICAL PUSH DOWN... ");
+  cosinusPush();  // always push a bit
   Start = millis();
-  while (millis() - Start < 50 && !stopped)
-  {
-    yield();
-    delay(200);
-    // no handler! precision required...
-  }
+  delay(500);  // no handler! precision required...
   cosinusStop();
+
   verticalDown();
   Start = millis();
-  while (millis() - Start < 2100 && !stopped)
-  {
-    if (paused)
-    {
-      pauseHandler("verticalDown");
-      Start = millis();
-    }
+  while (millis() - Start < 3400 && !stopped) {
     // not all the way down, we need to pull cosinus back a bit first
     mainHandler();
   }
   verticalStop();
   cosinusPull();
   Start = millis();
-  while (millis() - Start < 1500 && !stopped)
-  {
-    if (paused)
-    {
-      pauseHandler("cosinusPull");
-      Start = millis();
-    }
+  while (millis() - Start < 1500 && !stopped) {
+
     mainHandler();
   }
   cosinusStop();
   verticalDown();
   Start = millis();
-  while (millis() - Start < 300 && !stopped)
-  {
-    if (paused)
-    {
-      pauseHandler("verticalDown");
-      Start = millis();
-    }
+  while (millis() - Start < 600 && !stopped) {
+
     // all the way down this time
     mainHandler();
   }
   verticalStop();
-  verticalDownStep(50, 10);
+  verticalDownStep(70, 10);
 
   goingdown = false;
-  overrideImpact = false; // enable impact Handler
+  overrideImpact = false;  // enable impact Handler
 }
-void verticalPull()
-{
+void verticalPull() {
   term.println("VERTICAL PULL");
-  unlock(); // always
+  unlock();  // always
   lastActionMillis = millis();
   goingdown = false;
   stopped = false;
   verticalUp();
   unsigned long Start = millis();
-  while (millis() - Start < 2000 && !stopped)
-  {
-    if (paused)
-    {
-      pauseHandler("verticalUp");
-      Start = millis();
-    }
+  while (millis() - Start < 500 && !stopped) {
+    mainHandler();
+  }
+  verticalStop();
+  // push cosinus outward a bit to free vertical puller off its socket and prevent resistance onto the vertical pulling process (which made the actuator dislodge itself before this implementation - feb 17 2024)
+  cosinusPush();
+  Start = millis();
+  while (millis() - Start < 300 && !stopped) {
+    delay(1);
+  }
+
+  verticalUp();
+  Start = millis();
+  while (millis() - Start < 1600 && !stopped) {
     mainHandler();
   }
   cosinusStop();
   cosinusPull();
   Start = millis();
-  while (millis() - Start < 1000 && !stopped)
-  {
-    if (paused)
-    {
-      pauseHandler("cosinusPull");
-      Start = millis();
-    }
+  while (millis() - Start < 1000 && !stopped) {
+
     mainHandler();
   }
   verticalStop();
 }
-void verticalDownStep(int steps, int length)
-{
+void verticalDownStep(int steps, int interval) {
   term.println("VERTICAL DOWN STEPS: " + String(steps));
-  for (int i = 0; i < steps; i++)
-  {
+  for (int i = 0; i < steps; i++) {
     verticalDown();
-    delay(length);
+    delay(interval);
     verticalStop();
-    delay(length);
+    delay(interval);
   }
   verticalStop();
 }
-void verticalUpStep(int steps, int length)
-{
+void verticalUpStep(int steps, int interval) {
   term.println("VERTICAL UP STEPS: " + String(steps));
-  for (int i = 0; i < steps; i++)
-  {
+  for (int i = 0; i < steps; i++) {
     verticalUp();
-    delay(length);
+    delay(interval);
     verticalStop();
-    delay(length);
+    delay(interval);
   }
   verticalStop();
 }
-void verticalUp()
-{
+void verticalUp() {
   term.println("VERTICAL UP");
   goingdown = false;
   digitalWrite(vertPush_A, 1);
   digitalWrite(vertPush_B, 0);
 }
-void verticalDown()
-{
+void verticalDown() {
   goingdown = true;
   digitalWrite(vertPush_A, 0);
   digitalWrite(vertPush_B, 1);
 }
-void verticalStop()
-{
+void verticalStop() {
   goingdown = false;
   digitalWrite(vertPush_A, 0);
   digitalWrite(vertPush_B, 0);
 }
-void cosinusPush()
-{
+void cosinusPush() {
   cosinuspushing = true;
   cosinuspulling = false;
   cosinusMillis = millis();
@@ -687,8 +644,7 @@ void cosinusPush()
   digitalWrite(COSINUS_A, 1);
   digitalWrite(COSINUS_B, 0);
 }
-void cosinusPull()
-{
+void cosinusPull() {
   cosinuspushing = false;
   cosinuspulling = true;
   cosinusMillis = millis();
@@ -697,11 +653,9 @@ void cosinusPull()
   digitalWrite(COSINUS_A, 0);
   digitalWrite(COSINUS_B, 1);
 }
-void cosinusPushStep(int steps, int length)
-{
+void cosinusPushStep(int steps, int length) {
   term.println("COSINUS PULL STEPS: " + String(steps));
-  for (int i = 0; i < steps; i++)
-  {
+  for (int i = 0; i < steps; i++) {
     cosinusPush();
     delay(length);
     cosinusStop();
@@ -709,11 +663,9 @@ void cosinusPushStep(int steps, int length)
   }
   cosinusStop();
 }
-void cosinusPullStep(int steps, int length)
-{
+void cosinusPullStep(int steps, int length) {
   term.println("COSINUS PULL STEPS: " + String(steps));
-  for (int i = 0; i < steps; i++)
-  {
+  for (int i = 0; i < steps; i++) {
     cosinusPull();
     delay(length);
     cosinusStop();
@@ -721,8 +673,7 @@ void cosinusPullStep(int steps, int length)
   }
   cosinusStop();
 }
-void cosinusStop()
-{
+void cosinusStop() {
   ledcWrite(pwmChannelCos, 0);
   digitalWrite(COSINUS_A, 0);
   digitalWrite(COSINUS_B, 0);
@@ -731,8 +682,7 @@ void cosinusStop()
   term.println("COSINUS STOP");
 }
 
-void stop()
-{
+void stop() {
   term.println("STOP");
   stopped = true;
   pushing = false;
@@ -763,8 +713,7 @@ void stop()
   digitalWrite(COSINUS_A, 0);
   digitalWrite(COSINUS_B, 0);
 }
-void simpleStop()
-{
+void simpleStop() {
   ledcWrite(pwmChannelActuator, 0);
   ledcWrite(pwmChannelCanOpener, 0);
   ledcWrite(pwmChannelCos, 0);
@@ -780,11 +729,9 @@ void simpleStop()
   digitalWrite(COSINUS_B, 0);
 }
 
-void logs()
-{
-  if (Logs && millis() - millisLogs >= 1000)
-  {
-    term.println("oneCanLeft() returns " + String(oneCanLeft() == 1 ? "true" : "false"));
+void logs() {
+  if (Logs && millis() - millisLogs >= 1000) {
+    // term.println("oneCanLeft() returns " + String(oneCanLeft() == 1 ? "true" : "false"));
     term.println("canLocked() returns " + String(canLocked() == 1 ? "true" : "false"));
     term.println("canInPosition() returns " + String(canInPosition() == 1 ? "true" : "false"));
     term.println("A deformSensor => " + String(analogRead(deformSensor)));

@@ -32,7 +32,6 @@ boolean EMstop = false;
 boolean reloadPage = true;
 boolean inFailSafeMode = false; // not the RTC var so it can be reset to 0 and this one takes over during the fail safe mode
 boolean speedOverride = false;
-boolean fanIsOff; // must be updated at setup
 
 unsigned long NTP_UPDATE_DELAY = 1000 * 60 * 60;
 unsigned long DELAY_REFRESH = 1800 * 1000; //in minutes

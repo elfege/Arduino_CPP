@@ -1,0 +1,89 @@
+{
+    "id": "523",
+    "name": "OpenWeather on Home 3",
+    "label": "OpenWeather on Home 3",
+    "type": "OpenWeatherMap",
+    "room": null,
+    "attributes": [
+        {
+            "name": "windSpeed",
+            "currentValue": 14.97,
+            "dataType": "NUMBER"
+        },
+        {
+            "name": "country",
+            "currentValue": "US",
+            "dataType": "STRING"
+        },
+        {
+            "name": "humidity",
+            "currentValue": 93,
+            "dataType": "NUMBER"
+        },
+        {
+            "name": "weatherIcons",
+            "currentValue": "13n,50n,",
+            "dataType": "STRING"
+        },
+        {
+            "name": "windDirection",
+            "currentValue": 30,
+            "dataType": "NUMBER"
+        },
+        {
+            "name": "cloudiness",
+            "currentValue": "100",
+            "dataType": "STRING"
+        },
+        {
+            "name": "temperature",
+            "currentValue": 33,
+            "dataType": "NUMBER"
+        },
+        {
+            "name": "city",
+            "currentValue": "Astoria",
+            "dataType": "STRING"
+        },
+        {
+            "name": "pressure",
+            "currentValue": 1003,
+            "dataType": "NUMBER"
+        },
+        {
+            "name": "weather",
+            "currentValue": "snow,mist,",
+            "dataType": "STRING"
+        },
+        {
+            "name": "hubMeshDisabled",
+            "currentValue": null,
+            "dataType": "STRING"
+        }
+    ],
+    "capabilities": [
+        "RelativeHumidityMeasurement",
+        {
+            "attributes": [
+                {
+                    "name": "humidity",
+                    "dataType": null
+                }
+            ]
+        },
+        "Refresh",
+        "TemperatureMeasurement",
+        {
+            "attributes": [
+                {
+                    "name": "temperature",
+                    "dataType": null
+                }
+            ]
+        },
+        "Sensor"
+    ],
+    "commands": [
+        "refresh"
+    ]
+}

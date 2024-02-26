@@ -37,12 +37,14 @@ void setup()
   state.registerVar( &reset_counter );
   state.registerVar( &lastSetPointRTC);
   state.registerVar( &lastTimeCmdSent);
+  state.registerVar( &fanInsteadOfCoolRTC);
 
 
   if (state.loadFromRTC()) {            // we load the values from rtc memory back into the registered variables
     reset_counter++;
     term.println("This is reset no. " + (String)reset_counter);
     lastSetPoint = String(lastSetPointRTC);
+    fanInsteadOfCool = fanInsteadOfCoolRTC; 
     state.saveToRTC();                  // since we changed a state relevant variable, we store the new values
   } else {
     reset_counter = 0;                  // cold boot part
@@ -52,6 +54,7 @@ void setup()
     lastSetpointRequested = lastSetPoint;
     fanMode = 0; // 0 = on 1 = auto
     lastTimeCmdSent = 1000 * 60 * 5; 
+    fanInsteadOfCoolRTC = 1; 
   }
 
   //*****************************************************************************

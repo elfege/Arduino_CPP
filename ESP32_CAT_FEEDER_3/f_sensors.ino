@@ -1,41 +1,35 @@
 
 
-bool canDown()
-{
+bool canDown() {
   return !digitalRead(candown);
 }
 
-bool canInPosition()
-{
-  return !digitalRead(canSensor); // limit switch
+bool canInPosition() {
+  return !digitalRead(canSensor);  // limit switch
 }
 
-bool eatingZonePushed() // if old can pressing ignore sensor and use timer instead
+bool eatingZonePushed()  // if old can pressing ignore sensor and use timer instead
 {
 
   return !digitalRead(eatingZoneSensor);
 }
 
-bool pusherRetracted()
-{
+bool pusherRetracted() {
   return !digitalRead(pusherRetract);
 }
 
-void wheelSpinning()
-{
-  if (!canopening)
-  {
+void wheelSpinning() {
+  if (!canopening) {
     return;
   }
- 
+
   // test for 1 change in sensor's state, and allow N millisecs for that to happen
-  spin = wheelStateChange(1, 1500); // global used only during opencan()
+  spin = wheelStateChange(1, 1500);  // global used only during opencan()
 }
 
-bool wheelStateChange(int occurrences, int test_duration)
-{
-   /*
-   * FUNCTION THAT TEST FOR SPIN/NO SPIN of the can during opening operation
+bool wheelStateChange(int occurrences, int test_duration) {
+  /*
+   * FUNCTION THAT TESTS FOR SPIN/NO SPIN of the can during opening operation
    *
    * PARAMETER 1: number of state change's occurences needed to declare that the can is duly spinning, or not. 
    * 
@@ -53,66 +47,64 @@ bool wheelStateChange(int occurrences, int test_duration)
    * 
    * 
    */
+
+  // return true;  // always true if harware fails
+
   int R = digitalRead(wheel);
   unsigned long Start = millis();
   int c = 0;
-  int detect_delay = 500; // another way to modulate sensitivity: the longer, the more sensitive to spin, the less sensitive to spin faillures
-  while (c < occurrences && millis() - Start < test_duration) // detect at least N incrementation [occurences] within N milliseconds
+  int detect_delay = 500;                                      // another way to modulate sensitivity: the longer, the more sensitive to spin, the less sensitive to spin faillures
+  while (c < occurrences && millis() - Start < test_duration)  // detect at least N incrementation [occurences] within N milliseconds
   {
-    while (R == digitalRead(wheel) && millis() - Start < detect_delay && !stopped) // increment c based at the FIRST state change within N millis / or do nothing
+    while (R == digitalRead(wheel) && millis() - Start < detect_delay && !stopped)  // increment c based at the FIRST state change within N millis / or do nothing
     {
       httpHandler();
     }
-    if (digitalRead(wheel) != R)
-    {
+    if (digitalRead(wheel) != R) {
       c++;
     }
   }
   //  term.println("WSC "+String(c));
   hasSpun = c >= occurrences;
-  return c >= occurrences; // return true if state has changed at least N [occurences] times during the 300ms
+  return c >= occurrences;  // return true if state has changed at least N [occurences] times during the 300ms
 }
 
-bool deformed()
-{
+bool deformed() {
+  // return false; // needs structural fixing - there's a current issue with multiple sensors
+
+
   int Read = analogRead(deformSensor);
-  if (Read > 600)
-  {
-    term.println("DEFORMATION => " + String(Read));
-    deformation = true;
-    return true;
-  }
-  else
-  {
+  if (Read > 2000) {
+    term.println("DEFORMATION => " + String(Read) + " RETURNING FALSE - NEEDS FIXING!!!!!!");
+    // deformation = true;
+    
+    deformation = false;
+
+    return deformation;
+  } else {
     deformation = false;
     return false;
   }
 }
 
-bool canLocked()
-{
+bool canLocked() {
   return !digitalRead(lockSensor);
 }
 
-bool empty1()
-{
-  return analogRead(IR1_pile) < 1800;
+bool empty1() {
+  return false;  // decomissioned analogRead(IR1_pile) < 1800;
 }
 
-bool empty2()
-{
+bool empty2() {
   return analogRead(IR2_pile) < 1800;
 }
 
-bool empty()
-{
-  return empty1() && empty2();
+bool empty() {
+  return empty2();
 }
-bool oneCanLeft()
-{
+bool oneCanLeft() {
   return !empty1() && empty2();
 }
-bool full()
-{
+bool full() {
   return !empty1() && !empty2();
 }

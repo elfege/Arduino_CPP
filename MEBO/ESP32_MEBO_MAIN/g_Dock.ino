@@ -88,8 +88,8 @@ void FollowLineRVS() {
   bumped = false;
   noblink = true; // blink led takes millis...
 
-  sPeeD = 160;
-  startingSpeed = sPeeD;
+  docking_speed = 160;
+  startingSpeed = docking_speed;
 
   int lineretrieveExecuted = 0;
 
@@ -111,10 +111,10 @@ void FollowLineRVS() {
 
     //term.println("LINE DOCKING");
     HttpReq = false; // make sure it'll take this speed
-    rvs(sPeeD, 0);
+    rvs(docking_speed, 0);
 
     execLineRvs();
-    sPeeD = startingSpeed;
+    docking_speed = startingSpeed;
 
     if (GotStuck) {
       GotStuck = false;
@@ -233,9 +233,9 @@ void manageStuckWheels() {
   if (!rearOBS() && manageGotStuck < 4) {
     term.print("increasing output");
     GotStuck = false;
-    if (sPeeD < 210)
+    if (docking_speed < 210)
     {
-      sPeeD += 10;
+      docking_speed += 10;
     }
   }
 
@@ -256,7 +256,7 @@ void retrieveLineFwd() {
 
   while (millis() - dsd < fwdTime && !STOPALL) {
     term.println("Line retrieval FWD");
-    fwd(sPeeD, 0);
+    fwd(docking_speed, 0);
     execLineFwdWithoutStopSign();
     MainFunctions();
   }

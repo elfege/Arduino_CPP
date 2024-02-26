@@ -4,19 +4,19 @@ void messageCallout(String message)
   // if debug is enabled print out the received message
   if (isDebugEnabled)
   {
-    Serial.print("Received message: '");
-    Serial.print(message);
-    Serial.println("' ");
+    term.print("Received message: '");
+    term.print(message);
+    term.println("' ");
   }
 
   // if message contents equals to 'on' then call on() function
   // else if message contents equals to 'off' then call off() function
   if (message.equals("override")) {
-    Serial.println("OVERRIDE");
+    term.println("OVERRIDE");
     userOverride = !userOverride;
     String var = userOverride ? "Override Active" : "Override Inactive";
     _server.send(200, "text/html", var);
-    buildDebug(var);
+    send_data(var);
   }
   if (message.equals("on"))
   {
@@ -28,7 +28,7 @@ void messageCallout(String message)
     }
     if(OnOffRunning) // if still true means STOP didn't break the on() or off() inner loops within timeframe
     {
-      Serial.println("TIMEOUT RESET");
+      term.println("TIMEOUT RESET");
       Reset();
     }
     on();
@@ -47,13 +47,13 @@ void messageCallout(String message)
   {
     allowshutDownWhenFail = true;
     String var = "SHUTDOWN ALLOWED";
-    buildDebug(var);
+    send_data(var);
   }
   else if (message.equals("FORBIDSHUTDOWN"))
   {
     allowshutDownWhenFail = false;
     String var = "SHUTDOWN FORBIDDEN";
-    buildDebug(var);
+    send_data(var);
   }
   
   else if (message.equals("refresh"))

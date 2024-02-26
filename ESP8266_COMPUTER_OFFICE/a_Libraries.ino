@@ -1,4 +1,3 @@
-#include <ESP8266Ping.h>
 
 
 #include <SmartThingsESP8266WiFi_DUAL_SSID_3_HUBS.h>
@@ -27,3 +26,6 @@ SmartThingsCallout_t messageCallout;
 /// Arduino OTA (redundent but necessary for custom name for now)
 //******************************************************************************************
 #include <ArduinoOTA.h>
+
+
+#include "WiFiTerm.h"// OTA DEBUG LIB Wifi Terminal

@@ -1,39 +1,44 @@
-void on() {
+void on()
+{
   OnOffRunning = true;
-  if (!isOn()) {
+  if (!is_on())
+  {
     digitalWrite(switchPin, 1);
     delay(500);
     digitalWrite(switchPin, 0);
-    Serial.println("");
-    Serial.println("");
-    Serial.println("COMPUTER TURNED ON");
+    term.println("");
+    term.println("");
+    term.println("COMPUTER TURNED ON");
   }
-  else {
-    Serial.println("ALREADY RUNNING");
+  else
+  {
+    term.println("ALREADY RUNNING");
   }
-  updateState();
-  
+  update_state();
+
   OnOffRunning = false;
+  
 }
 
-void off() {
+void off()
+{
   // NB: NEVER USE A RETURN STATEMENT IN THIS METHOD
   OnOffRunning = true;
   if (!noSleep)
   {
-    Serial.println("Putting computer to sleep");
+    term.println("Putting computer to sleep");
 
-    if (isOn())
+    if (is_on())
     {
       digitalWrite(switchPin, 1);
       delay(500);
       digitalWrite(switchPin, 0);
       unsigned long s = millis();
-      while (millis() - s < 70000 && !STOP && isOn())
+      while (millis() - s < 70000 && !STOP && is_on())
       {
         master();
       }
-      if (millis() - s > 70000 && !STOP && isOn() && !userOverride)
+      if (millis() - s > 70000 && !STOP && is_on() && !userOverride)
       {
         // failed so try again
         digitalWrite(switchPin, 1);
@@ -44,49 +49,49 @@ void off() {
     }
     else
     {
-      Serial.println("Computer already off or sleeping");
+      term.println("Computer already off or sleeping");
     }
   }
   else
   {
-    Serial.println("SLEEP OVERRIDE - noSleep BOOL TRUE");
+    term.println("SLEEP OVERRIDE - noSleep BOOL TRUE");
   }
-  updateState();
+  update_state();
   OnOffRunning = false;
 }
-void updateState() {
-  if (isOn())
+void update_state()
+{
+  if (is_on())
   {
-    lastState = "on";
-    buildDebug("switch on");
-    buildDebug("computer running");
+    last_state = "on";
+    send_data("switch on");
+    send_data("computer running");
   }
   else
   {
-    lastState = "off";
-    buildDebug("switch off");
-    buildDebug("computer sleeping");
+    last_state = "off";
+    send_data("switch off");
+    send_data("computer sleeping");
   }
 }
 void getPowerState()
 {
-  togglePower();
-  String state = isOn() ? "computer running" : "computer sleeping";
+  toggle_power();
+  String state = is_on() ? "computer running" : "computer sleeping";
   _server.send(200, "text/plain", state);
-  buildDebug(state);
+  send_data(state);
 }
 
 void getPowerStateOnly()
 {
-  String state = isOn() ? "computer running" : "computer sleeping";
+  String state = is_on() ? "computer running" : "computer sleeping";
   _server.send(200, "text/plain", state);
-  buildDebug(state);
+  send_data(state);
 }
 
-
-void togglePower()
+void toggle_power()
 {
-  if (isOn())
+  if (is_on())
   {
     STOP = true; // in case while() loop is running
     off();
@@ -98,7 +103,7 @@ void togglePower()
   }
 }
 
-void hardreboot()
+void hard_reboot()
 {
   digitalWrite(switchPin, 1);
   delay(5000);
@@ -115,77 +120,67 @@ void shutDown()
   digitalWrite(switchPin, 0);
 }
 
-void refresh() {
-  Serial.println("REFRESHING");
+void refresh()
+{
+  term.println("REFRESHING");
 
-  lastState = isOn() ? "on" : "off";
+  last_state = is_on() ? "on" : "off";
 
-  if (!isOn()) {
-    Serial.println("reporting 'computer sleeping'");
-    buildDebug("switch off");
-    buildDebug("computer sleeping");
-    buildDebug("status sleeping");
+  if (!is_on())
+  {
+    term.println("reporting 'computer sleeping'");
+    send_data("switch off");
+    send_data("computer sleeping");
+    send_data("status sleeping");
   }
   else
   {
-    Serial.println("reporting 'computer on'");
-    buildDebug("switch on");
-    buildDebug("computer running");
-    buildDebug("status running");
+    term.println("reporting 'computer on'");
+    send_data("switch on");
+    send_data("computer running");
+    send_data("status running");
   }
 
   String var = "";
   var = allowshutDownWhenFail ? "SHUTDOWN ALLOWED" : "SHUTDOWN FORBIDDEN";
-  buildDebug(var);
+  send_data(var);
   var = userOverride ? "Override Active" : "Override Inactive";
   //  _server.send(200, "text/html", var); // has to be called from js
-  buildDebug(var);
+  send_data(var);
   noSleep = false; // only place where this value is reset
-
-
 }
 /////////////////// BOOLEANS /////////////////////////
-boolean isOn() {
+boolean is_on()
+{
   bool result;
-  if (analogRead(ASensor) >= 1020) {
-    result = true;
-  }
-  else {
-    result = false;
-  }
-  //Serial.println(result);
-  return result;
-}
-
-void buildDebug(String var)
-{
-  Serial.println("building debug");
-  smartthing.send(var); // send the current value to smartthings
-  _server.send(200, "text/html", debugData);
-  debugData.concat(var + "\n"); // build the debug data string for the java text area
-  Serial.println("SENDING " + var + " TO HUB");
-
-}
-
-void getDataDebug() // called by JS
-{
-  // send last updated value in getDebug()
-
-
-  if (debugData.length() > 5)
+  if (analogRead(ASensor) >= 1020)
   {
-    if (debugData.length() > 2000)
-    {
-      debugData = "";
-      logs = false; // stop sensor logs
-      buildDebug("DATA RESET");
-    }
+    result = true;
   }
   else
   {
-    Serial.println("debugData string empty");
+    result = false;
   }
+  // term.println(result);
+  return result;
 }
+
+void send_data(String var)
+{
+  
+  new_state = last_state == "off" && var == "on" || last_state == "on" && var == "off";
+
+  //refresh state every minute or if it changed
+  if (millis() - last_message_sent_millis >= 60000 || new_state)
+  {
+    term.println("sending " + var + " to the hub");
+    smartthing.send(var); // send the current value to smartthings
+    last_message_sent_millis = millis();
+  }
+
+}
+
+
 void getMac()
 {
   String ip = WiFi.localIP().toString();
@@ -198,8 +193,8 @@ void log()
 
   String debug1 = "";
   String debug2 = "";
-  buildDebug(debug1);
-  buildDebug(debug2);
+  send_data(debug1);
+  send_data(debug2);
 }
 
 String TimeInfos()
@@ -214,82 +209,87 @@ String TimeInfos()
   unsigned long displayHours = (millis() - (TotalTimeDays * 1000 * 60 * 60 * 24)) / 1000 / 60 / 60;
   unsigned long dispalyDays = TotalTimeDays;
 
-
-  Serial.println("LOOP time = " + String(elapsed) + "ms");
+  term.println("LOOP time = " + String(elapsed) + "ms");
   String result = "Time since last boot: ";
 
   if (dispalyDays == 1)
   {
     result = result + dispalyDays + " day";
-    Serial.println(result);
+    term.println(result);
   }
   else if (dispalyDays > 1)
   {
     result = result + dispalyDays + " days";
-    Serial.println(result);
+    term.println(result);
   }
   if (displayHours == 1)
   {
     result = result + displayHours + " hour ";
-    Serial.println(result);
+    term.println(result);
   }
   else if (displayHours > 1)
   {
     result = result + displayHours + " hours ";
-    Serial.println(result);
+    term.println(result);
   }
   if (displayMinutes == 1)
   {
     result = result + displayMinutes + " minute ";
-    Serial.println(result);
+    term.println(result);
   }
   else if (displayMinutes > 1)
   {
     result = result + displayMinutes + " minutes ";
-    Serial.println(result);
+    term.println(result);
   }
   if (displaySeconds == 1)
   {
     result = result + displaySeconds + " second ";
-    Serial.println(result);
+    term.println(result);
   }
   else if (displaySeconds > 1)
   {
     result = result + displaySeconds + " seconds ";
-    Serial.println(result);
+    term.println(result);
   }
 
   _server.send(200, "text/html", result);
   return result;
 }
 
-void glow(int DL) {
+void glow(int DL)
+{
   int s = 1024;
 
-  if (glw >= s) {
+  if (glw >= s)
+  {
     goUp = false;
   }
-  else if (glw < 1) {
+  else if (glw < 1)
+  {
     goUp = true;
   }
 
-  if (goUp && glw < s) {
+  if (goUp && glw < s)
+  {
     glw++;
     analogWrite(LED, glw);
-    //Serial.print("GLOW "); Serial.println(i);
-
+    // term.print("GLOW "); term.println(i);
   }
-  else if (!goUp && glw > 0) {
+  else if (!goUp && glw > 0)
+  {
     glw--;
     analogWrite(LED, glw);
-    //Serial.print("GLOW "); Serial.println(i);
+    // term.print("GLOW "); term.println(i);
   }
   delay(DL);
 }
 
-void Blink(int times, int lapse) {
+void Blink(int times, int lapse)
+{
   int c = 0;
-  while (c < times) {
+  while (c < times)
+  {
     digitalWrite(LED, 1);
     delay(lapse);
     digitalWrite(LED, 0);
@@ -298,6 +298,7 @@ void Blink(int times, int lapse) {
   }
 }
 
-void Reset() {
+void Reset()
+{
   ESP.reset();
 }

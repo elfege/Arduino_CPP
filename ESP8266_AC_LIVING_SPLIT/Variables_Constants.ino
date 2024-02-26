@@ -1,11 +1,11 @@
-#define DELAY_CMD 1000 // TOO HIGH OF A VALUE MAY TRIGGER WTD!
+#define DELAY_CMD 2000
 
 String cmd; // heatingSetpoint or coolingSetpoint
 String StringForRefresh; // "heatingSetpoint + space + value // for when the device refreshes its status
 String StringTemp = "";
 String timerResult = "";
-String lastSetPoint = ""; // setpoint to be remembered for the hub's driver setpoint display
-String lastSetpointRequested = ""; // setpoint to be remebered to reinstante boost setpoint after a normal setpoint request.
+String lastSetPoint = "74"; // setpoint to be remembered for the hub's driver setpoint display // default value needed after reboot
+String lastSetpointRequested = ""; // setpoint to be remembered to reinstate boost setpoint after a normal setpoint request. Used to verify boostTempNeeded boolean
 // it must become identical to boost setpoint for master ()
 // to know that something's changed and boost setpoint needs to be reinstated
 String requiredSetpointForBoost = "";
@@ -26,9 +26,16 @@ unsigned long lastNTP = millis();
 unsigned long millisBoot = millis();
 unsigned long lastLogMillis = millis();
 unsigned long lastModeRequest = millis();
+
 unsigned long fanDurationWhenOff = 10 * 60 * 1000;
 unsigned long offRequestMillis = fanDurationWhenOff;
 
+
+const int temperatureCheckTimerDelay = 5 * 60 * 1000;
+unsigned long lastTemperatureCheck = temperatureCheckTimerDelay - 30000; // run getOutdoorTemperature() 30s after boot
+int outside_temperature = 0; 
+
+unsigned long dealytBtwCmds = 1000 * 60 * 3;
 
 const int DELAY_SEC_5mn = 600;
 
@@ -63,7 +70,9 @@ int ntpFailures = 0;
 
 int elapsed = 0;
 
-int khz = 38000; //NB Change this default value as neccessary to the correct modulation frequency
+int khz = 38; //NB Change this default value as neccessary to the correct modulation frequency
+
+
 
 /***************************Turn ON the AC*****************************************/
 
@@ -101,7 +110,6 @@ uint32_t  TURBO[199] PROGMEM = {4424, 4388, 564, 1624, 528, 548, 580, 1604, 580,
 uint32_t PUREHEAT[199] PROGMEM = {4424, 4348, 576, 1604, 572, 524, 568, 1612, 572, 524, 568, 524, 540, 556, 564, 528, 568, 1608, 572, 1612, 572, 524, 568, 524, 568, 1608, 572, 1608, 572, 524, 568, 1612, 572, 1608, 572, 524, 568, 1608, 572, 1608, 572, 1604, 572, 1608, 572, 524, 568, 524, 568, 528, 568, 1608, 572, 1604, 572, 1608, 572, 1604, 572, 1608, 572, 1608, 568, 1608, 572, 1608, 568, 1616, 572, 1608, 568, 1608, 572, 1608, 572, 1604, 572, 1604, 572, 1608, 572, 1608, 572, 528, 568, 1604, 572, 1608, 572, 524, 568, 524, 568, 524, 544, 552, 568, 1608, 568, 5188, 4420, 4352, 576, 524, 568, 1608, 576, 524, 564, 1612, 576, 1604, 572, 1604, 572, 1608, 572, 524, 568, 528, 568, 1612, 568, 1608, 572, 524, 568, 528, 564, 1608, 572, 524, 568, 528, 568, 1612, 572, 524, 568, 524, 568, 524, 568, 528, 568, 1608, 568, 1608, 572, 1608, 572, 524, 568, 528, 568, 524, 568, 524, 540, 552, 572, 520, 572, 524, 568, 524, 568, 528, 568, 524, 568, 524, 568, 528, 568, 524, 568, 524, 568, 524, 568, 528, 568, 1612, 572, 524, 568, 524, 568, 1608, 572, 1604, 572, 1608, 572, 1608, 572, 524, 568}; 
 // PURE COOL: set to actual cool, at max cool, for smart home management facilitation. Auto, on these models, kinda sucks. 
 uint32_t PURECOOL[199] PROGMEM = {4408, 4380, 540, 1636, 536, 560, 536, 1644, 540, 556, 536, 556, 540, 552, 540, 556, 536, 1640, 536, 1648, 512, 584, 536, 556, 536, 1636, 516, 1664, 540, 556, 536, 560, 536, 556, 536, 560, 536, 1640, 544, 1636, 540, 556, 536, 556, 536, 556, 540, 556, 536, 556, 536, 1644, 540, 1636, 544, 1636, 540, 1640, 536, 1640, 512, 1668, 536, 1640, 544, 1640, 536, 1644, 544, 1636, 540, 1636, 516, 1664, 540, 1640, 540, 1636, 540, 1640, 540, 1636, 516, 584, 540, 1636, 540, 1640, 536, 1640, 512, 1664, 516, 580, 540, 1640, 540, 556, 560, 5216, 4364, 4412, 540, 556, 536, 1644, 540, 556, 536, 1644, 540, 1636, 544, 1636, 540, 1636, 540, 560, 536, 556, 540, 1640, 540, 1640, 512, 580, 540, 556, 536, 1636, 540, 1640, 540, 1640, 540, 1640, 512, 584, 540, 552, 540, 1636, 540, 1636, 540, 1636, 544, 1636, 512, 1668, 512, 584, 540, 556, 536, 556, 532, 560, 536, 556, 540, 552, 540, 556, 536, 556, 536, 560, 536, 556, 536, 556, 536, 556, 540, 556, 536, 556, 536, 556, 540, 556, 536, 1644, 540, 556, 536, 556, 536, 556, 540, 552, 540, 1636, 544, 552, 536, 1648, 560}; 
-
 
 // Temperatures // all temperatures are based on AUTO mode
 

@@ -20,6 +20,20 @@ void initXMLhttp()
     _server.send(200, "text/html", clockInfo);
   });
 
+  _server.on("/cool-w-fan", []()
+  {
+    term.println("fanInsteadOfCoolRTC ==> b4 ==>" + String(fanInsteadOfCoolRTC));
+    term.println("fanInsteadOfCool ==> b4 ==>" + String(fanInsteadOfCool));
+    fanInsteadOfCool = !fanInsteadOfCool;
+    fanInsteadOfCoolRTC = fanInsteadOfCool;
+    term.println("fanInsteadOfCoolRTC ==> after ==>" + String(fanInsteadOfCoolRTC));
+    term.println("fanInsteadOfCool ==> after ==>" + String(fanInsteadOfCoolRTC));
+
+    String str = "COOL-w-FAN " + String(fanInsteadOfCool ? "enabled" : "disabled");
+    _server.send(200, "text/html", str);
+  });
+  
+
   _server.on("/cool", cool);
   _server.on("/heat", heat);
 
