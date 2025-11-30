@@ -13,7 +13,7 @@ void messageCallout(String message)
 
   if (message.equals("on"))
   {
-    On();
+    On("Hubitat");
     onRequestedByUser = true;
   }
   else if (message.equals("off"))
@@ -52,7 +52,8 @@ void Refresh() {
   //Blink(5, 50);
 }
 
-void On() {
+void On(String origin) {
+  term.println("On called by " + origin);
   buildDebug("switch on");
   digitalWrite(Signal, 1);
   scheduledRunning = true;
@@ -90,7 +91,7 @@ void Off() {
   }
 }
 
-boolean wet()
+bool wet()
 {
   bool result = false;
   int m = 0; // number of measurements
@@ -120,23 +121,11 @@ void buildDebug(String var)
 {
   term.println(var);
   smartthing.send(var); // send the current value to smartthings
-  debugData.concat(var + "\n"); // build the debug data string
+  // debugData.concat(var + "\n"); // build the debug data string
   //term.println("concatenate");
 }
 
-void getDataDebug() // called by JS
-{
-  // send last updated value in getDebug()
 
-  //term.println("sending debug data to server");
-  //_server.send(200, "text/html", debugData);
-  if (debugData.length() > 2000)
-  {
-    debugData = "";
-    logs = false; // stop sensor logs
-    //buildDebug("DATA RESET");
-  }
-}
 void getMac()
 {
   String var = WiFi.macAddress();

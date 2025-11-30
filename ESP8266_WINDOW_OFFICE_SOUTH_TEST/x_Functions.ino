@@ -221,7 +221,7 @@ void Move(String dir)
     term.println("**************************UNDEFINED DIR!**************************");
   }
 }
-void reverseStop()
+void backOffFromLimitSwitch()
 {
 
   if (dir == "B") // closing

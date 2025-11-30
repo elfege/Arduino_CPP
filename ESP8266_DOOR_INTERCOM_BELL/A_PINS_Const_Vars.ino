@@ -35,8 +35,8 @@ const int RELEASE = 1;
 int sensorValue = 0;  // variable to store the value read by the sensor
 
 int Value = HIGH;
-int threshold= 500;
-int lastloop = 5; // we don't want last loop to run the first time this value is reset once powerOn was triggered
+int threshold= 200;
+int lastloop = 5; // we don't want last loop to run the first time this value is reset once EXECUTE_MAIN_OPERATION was triggered
 
 
 
@@ -61,3 +61,4 @@ unsigned long WiFiLostMillis = millis();
 unsigned long lastSignalDebug = millis();
 unsigned long cmdFromHttpMillis = millis();
 unsigned long lastRead = millis();
+unsigned long lastSignalLog = millis(); 

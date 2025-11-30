@@ -34,8 +34,8 @@
 #define servo_pwm         33
 #define SMALL_PUSHER_PIN  4
 
-#define vertPush_A        27
-#define vertPush_B        16
+#define vertPush_A        16
+#define vertPush_B        27
 
 #define COSINUS_A         18
 #define COSINUS_B         2

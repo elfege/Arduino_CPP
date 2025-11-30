@@ -20,12 +20,12 @@ void cool()
       /* VERY POWER HUNGRY FEATURE!!! */
       irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
       delay(DELAY_CMD);
-      irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
-      delay(DELAY_CMD);
-      irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
-      delay(DELAY_CMD);
-      irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
-      delay(DELAY_CMD);
+      // irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
+      // delay(DELAY_CMD);
+      // irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
+      // delay(DELAY_CMD);
+      // irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
+      // delay(DELAY_CMD);
       turbo();
 
       // indexArray = getIndex(lastSetPoint);
@@ -162,7 +162,7 @@ void Auto()
   onrequested = true;
   requestTurbo = true; // reset turbo() cmd
   turboIsOn = false;
-  requestTurboMillis = millis(); // so it is sent again wit
+  requestTurboMillis = millis(); // so it is sent again
 
   send_to_hub("thermostatMode auto");
   send_to_hub("thermostatFanMode auto");

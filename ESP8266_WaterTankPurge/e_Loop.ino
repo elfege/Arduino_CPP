@@ -24,9 +24,9 @@ void loop() {
 
   // purge the water tank/ activate pump on a schedule (MUST NOT RUN FROM MASTER)
   if (millis() - previousMillisPURGE > schedule && schedule != 0 && !scheduledRunning) {
+    scheduledRunning=true;
     previousMillisPURGE = millis();
-    On();
-    // stopped by master() after n seconds
+    On("scheduled purge");
   }
 
 
@@ -64,7 +64,7 @@ void master() {
       digitalWrite(LED, !digitalRead(LED));
       previousMillisBlink = millis();
     }
-    if (scheduledRunning && millis() - previousMillisRun > regularPurgeDuration * 1000)  // n seconds purge
+    if (scheduledRunning && millis() - previousMillisRun > regularPurgeDuration)  // n seconds purge
     {
       previousMillisRun = millis();
       scheduledRunning = false;

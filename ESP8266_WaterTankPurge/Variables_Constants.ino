@@ -22,10 +22,10 @@ unsigned long maxTimeout = millis();
 unsigned long previousMillisPURGE = 0;
 unsigned long previousMillisRun = 0;
 
-unsigned long MAX_RUN_AFTER_USER_REQUEST = 5000;
+unsigned long MAX_RUN_AFTER_USER_REQUEST = 60000;
 
 
-int regularPurgeDuration = 70; // run for n seconds every n hours
+int regularPurgeDuration = 70 * 1000; // run for n seconds every n hours
 
 int desiredTime = 3; // 0 cancels out this feature // run purge every n hours for n(regularPurgeDuration) seconds
 int seconds = 1000;
@@ -80,11 +80,6 @@ boolean emergencySpeed = false;
 boolean pumping = false;
 boolean onRequestedByUser = false;
 
-String debugData = "";
-String previousDebugData = "";
-String previousDebugDataCmd = "";
-String previousDebugDataCmdBits = "";
-String previousDebugDataCmdLevel = "";
 String timeOfLastBoot = "";
 String lastMessage = "";
 String timerResult = "";

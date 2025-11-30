@@ -66,14 +66,14 @@ NTPClient timeClient(ntpUDP, timeServer, (3600 * TIME_ZONE_OFFSET_HRS), NTP_UPDA
 #include "WiFiTerm.h"// OTA DEBUG LIB Wifi Terminal
 
 
-#include <SmartThingsESP8266WiFi_DUAL_SSID_3_HUBS.h>
+// #include <SmartThingsESP8266WiFi_DUAL_SSID_3_HUBS.h>
 //#include <SmartThingsESP8266WiFi_DUAL_SSID_DUAL_HUB.h>
 //#include <SmartThingsESP8266WiFi_DUAL_SSID.h>
 //#include <SmartThingsESP8266WiFi.h>
 //#include <SmartThingsESP8266_WIFI_SSID.h>
 
 // call out function forward decalaration
-SmartThingsCallout_t messageCallout;
+// SmartThingsCallout_t messageCallout;
 
 //******************************************************************************************
 /// Arduino OTA (redundent but necessary for custom name for now)

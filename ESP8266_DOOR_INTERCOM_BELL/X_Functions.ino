@@ -1,28 +1,33 @@
-void PowerOn() {
+void EXECUTE_MAIN_OPERATION() {
   term.println("POWER ON");
   lastloop = 0;
   switch_door_operation_is_running = true;
+  wait(100);
   term.println("pressing talk button");
-  digitalWrite(TALK, PRESS);  // talk button to activate intercom
-  wait(2000);                 // wait n seconds to simulate time needed to answer/say something over the intercom
-  term.println("releasing talk button");
-  digitalWrite(TALK, RELEASE);  // release talk button
+  digitalWrite(TALK, PRESS);                                       // talk button to activate intercom
+  wait(1000);                                                      // delay n seconds to simulate time needed to answer/say something over the intercom
+  yield();                                                         // prevent watchdog trigger from firering
+  term.println("releasing talk button");                           //
+  digitalWrite(TALK, RELEASE);                                     // release talk button
+  term.println("delaying for 1 second for signal to go through");  //
+  wait(800);                                                       // give time to the intercom system to accept the DOOR command.
+  yield();                                                         // prevent watchdog trigger from firering
+  term.println("opening DOOR");                                    //
+  unlock_door();                                                   // UNLOCKS THE DOOR FOR 5 SECONDS
+  switch_door_operation_is_running = false;                        //inform main loop it's done
+  terminate(true);                                                 // terminate com
+}
 
-  wait(200);
-  term.println("opening DOOR");
-  digitalWrite(DOOR, PRESS);  // press the door's button
-  wait(3000);
-  digitalWrite(DOOR, RELEASE);  // release door's button
-
-  term.println("Looking at videofeed");
-  wait(5000);  // leaves time to look at the videofeed
-
-  term.println("now pressing talk buttont to terminate com");
-  digitalWrite(TALK, PRESS);  // press talk button to terminate com
-  wait(200);
-  digitalWrite(TALK, RELEASE);               // release talk button
-  wait(200);                                 //wait long enough for sensorValue measurement to take effect on the next cycle
-  switch_door_operation_is_running = false;  //inform main loop it's done
+void terminate(bool termination_needed) {
+  // Making sure com is terminated once operation is done running (don't use got_signal here, we read the actual remaining signal, which comes from the video feed power pin of the existing intercom's system)
+  while (termination_needed && analogRead(A0) >= threshold && lastloop <= 4 && !switch_door_operation_is_running) {
+    digitalWrite(TALK, PRESS);  // press talk button to terminate communication
+    wait(1000);
+    digitalWrite(TALK, RELEASE);  // release talk button
+    wait(1500);
+    lastloop++;
+  }
+  lastloop = 0;  // reset this value
 }
 
 void talk() {
@@ -32,30 +37,38 @@ void talk() {
     term.println("TALK RELEASED");
     digitalWrite(TALK, RELEASE);
     _server.send(200, "text/html", "TALK");
-  } else {
-    cmdFromHttp = true;
-    cmdFromHttpMillis = millis();
-    term.println("TALK PRESSED");
-    digitalWrite(TALK, PRESS);
-    _server.send(200, "text/html", "TALKING");
   }
-  // Refresh(); //overrides the desired switch on event we want to send...
+  wait(1000);
+  cmdFromHttp = true;
+  cmdFromHttpMillis = millis();
+  term.println("TALK PRESSED");
+  digitalWrite(TALK, PRESS);
+  _server.send(200, "text/html", "TALKING");
+
+  wait(500);
 }
 
-void open() {
+void unlock_door() {
   term.println("DOOR STATE: " + String(digitalRead(DOOR)));
+  term.println("PRESSING DOOR OPENNING BUTTON");
+  // ensure proper initial state
   if (digitalRead(DOOR) == PRESS) {
     cmdFromHttp = false;
     term.println("DOOR RELEASED");
     digitalWrite(DOOR, RELEASE);
     _server.send(200, "text/html", "DOOR");
-  } else {
-    cmdFromHttp = true;
-    cmdFromHttpMillis = millis();
-    term.println("DOOR PRESSED");
-    digitalWrite(DOOR, PRESS);
-    _server.send(200, "text/html", "OPENING");
   }
+  wait(1000);
+
+  // cmdFromHttp = true;
+  // cmdFromHttpMillis = millis();
+
+  term.println("DOOR PRESSED");
+  digitalWrite(DOOR, PRESS);
+  _server.send(200, "text/html", "OPENING");
+  wait(5000);
+  digitalWrite(DOOR, RELEASE);  //always release within 5 seconds max
+
   // Refresh(); //overrides the desired switch on event we want to send...
 }
 void close() {
@@ -71,10 +84,13 @@ void close() {
   // Refresh(); //overrides the desired switch on event we want to send...
 }
 void on() {
-  open();
+  term.println("ON FUNCTION DISABLED");
+  // unlock_door();
 }
 void off() {
-  close();
+  term.println("OFF FUNCTION DISABLED");
+
+  // close();
 }
 
 void PowerOff() {
@@ -90,7 +106,7 @@ void PowerOff() {
 }
 
 void httpHandler() {
-  smartthing.run();
+  // smartthing.run();
   _server.handleClient();  // JS webpage and wifi terminal
   term.handleClient();     // WiFi terminal
   yield();
@@ -98,9 +114,12 @@ void httpHandler() {
 
 void send_event(String var)  // called within Arduino C
 {
+  //
+  return;  // DISABLED!
+
   sent = false;
   term.println("Sending event message: " + var);
-  smartthing.send(var);
+  // smartthing.send(var);
   _server.send(200, "text/html", var);
   term.println("message sent");
   wait(1000);
@@ -159,7 +178,7 @@ void messageCallout(String message) {
     off();
   }
   if (message.equals("open")) {
-    open();
+    unlock_door();
   }
   if (message.equals("close")) {
     close();
@@ -179,6 +198,7 @@ void messageCallout(String message) {
 void wait(int time) {
   unsigned long Start = millis();
   while (millis() - Start < time) {
+    ArduinoOTA.handle();  // service OTA during waits
     httpHandler();
     yield();
   }
@@ -196,6 +216,7 @@ void Reset() {
 }
 
 void WiFiHandler() {
+
   if (WiFi.status() != WL_CONNECTED && !wifiLostAware) {
     term.println("******************* LOST WIFI CONNEXION ********************* ");
     WiFiLostMillis = millis();

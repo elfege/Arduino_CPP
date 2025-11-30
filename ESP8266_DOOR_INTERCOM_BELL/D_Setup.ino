@@ -29,13 +29,13 @@ void setup() {
   //IoT HUB interface initialization
   //*****************************************************************************
   // callout function forward decalaration
-  SmartThingsCallout_t messageCallout;
+  // SmartThingsCallout_t messageCallout;
   // setup default state of global variables
   // isDebugEnabled = true;
 
   //Run the SmartThings init() routine to make sure the ThingShield is connected to the ST Hub
-  smartthing.init();
-  term.println("ST initialized");
+  // smartthing.init();
+  // term.println("ST initialized");
 
 
   //*****************************************************************************
@@ -63,19 +63,21 @@ void setup() {
   OTAConfig();
 
   // update hub
-  Refresh(); 
+  Refresh();
 
   Blink(3, 500);
 
   term.println("REBOOT DONE");
-
 }
 
-void pinConfig(){
+void pinConfig() {
   pinMode(DOOR, OUTPUT);
   pinMode(TALK, OUTPUT);
   pinMode(LED, OUTPUT);
-  // pinMode(sensorPin, INPUT); // A0 always input... 
+  // pinMode(sensorPin, INPUT); // A0 always input...
+
+  digitalWrite(DOOR, RELEASE);
+  digitalWrite(TALK, RELEASE);
 }
 
 
@@ -88,6 +90,7 @@ void OTAConfig() {
     term.println("\nEnd");
     //digitalWrite(LED, 1);  //boot fails if pulled low, should be handeled by controller
     //hardReset(); // ESP8266 needs hard reset after flashing // deletes all RTCVars
+    delay(100);     // allow OTA final ACK to transmit before reboot
     ESP.restart();  // soft reset instead
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
@@ -108,5 +111,3 @@ void OTAConfig() {
   ArduinoOTA.begin();
   term.println("ArduinoOTA Ready");
 }
-
-

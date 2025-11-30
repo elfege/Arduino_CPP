@@ -13,7 +13,7 @@ void cool()
     currentMode = "cool";
     term.println("cool()");
 
-    if (outside_temperature >= 60 || outside_temperature == 0)
+    if (outside_temperature >= 45 || outside_temperature == 0)
     {
       /* VERY POWER HUNGRY FEATURE!!! */
       irsend.sendRaw(PURECOOL, sizeof(PURECOOL) / sizeof(int), khz); // PURECOOL cmd instead of boosting value, the later being an "auto" cmd, which sucks most of the time.
@@ -45,7 +45,7 @@ void cool()
   }
   else
   {
-    term.println("Command already sent less than 5 minutes ago. Doing nothing to prevent cancel effect on unit");
+    term.println("Command already sent less than "+String(dealytBtwCmds/1000/60)+" minutes ago. Doing nothing to prevent cancel effect on unit");
   }
 }
 void heat()
@@ -111,7 +111,7 @@ void heat()
   }
   else
   {
-    term.println("Command already sent less than 5 minutes ago. Doing nothing to prevent cancel effect on unit");
+    term.println("Command already sent less than "+String(dealytBtwCmds/1000/60)+" minutes ago. Doing nothing to prevent cancel effect on unit");
   }
   // NB: turbo request is set by the SetTemp() function.
 }

@@ -26,7 +26,7 @@ void Open() {
       stepcount++;
     }
 
-    reverseStop();
+    backOffFromLimitSwitch();
 
     if (isFullyOpen() && !stopped)
     {
@@ -39,7 +39,7 @@ void Open() {
       }
 
       delay(100); // let it run a bit more (higher amplitude limit switch - to be modified in future versions by a smaller one
-      reverseStop();
+      backOffFromLimitSwitch();
       Direction = fwd;
       //analogWrite(pwm, 255);
       while (!isFullyOpen() && !stopped)
@@ -87,7 +87,7 @@ void Close()
       stepcount--;
     }
 
-    reverseStop();
+    backOffFromLimitSwitch();
 
     if (!isOpen() && !stopped)
     {
@@ -99,7 +99,7 @@ void Close()
         Move(Direction);  // release pressure on limit switch
         //Serial.println("Releasing pressure " + String(isOpen()));
       }
-      reverseStop();
+      backOffFromLimitSwitch();
       delay(100);
       Direction = rvs;
       //analogWrite(pwm, 255);
@@ -137,7 +137,7 @@ void simpleClose()
   Move(Direction);
 }
 
-void reverseStop() // reverse as brake
+void backOffFromLimitSwitch() // reverse as brake
 {
   if (Direction ==  rvs) // closing
   {

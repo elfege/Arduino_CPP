@@ -137,10 +137,10 @@ void master() {
 
 void serverAndHub() {  
   _server.handleClient(); // JS webpage and wifi terminal
-  //  term.println("term clt hdl");
   term.handleClient();// WiFi terminal (second call, necessary)
   smartthing.run();
   safety();
+  yield();
 }
 
 void safety() {

@@ -9,10 +9,9 @@ void initXMLhttp()
   });
 
   _server.on("/on", []() {
-    On();
+    On("Ajax");
     onRequestedByUser = true;
-    
-    
+        
   });
   _server.on("/off", Off);
 
@@ -23,7 +22,6 @@ void initXMLhttp()
   _server.on("/getIP", getIP);
   _server.on("/getSSID", getSSID);
   _server.on("/getRSSI", getRSSI);
-  _server.on("/debug", getDataDebug);
   _server.on("/getTimeInfo", TimeInfos);
   _server.on("/getwetval", []()
   {

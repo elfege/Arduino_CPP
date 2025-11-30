@@ -122,7 +122,7 @@ void setup()
   Refresh();
 
   String var = "window boot";
-  buildDebug(var); ;
+  updateHub(var); ;
 
   windowLastState = isOpen() ? "window is open" : "WINDOW IS CLOSED";
 

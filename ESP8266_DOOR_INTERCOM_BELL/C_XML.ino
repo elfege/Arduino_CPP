@@ -1,6 +1,8 @@
 void initXMLhttp() {
   _server.on("/", []() {
+    term.println("HTTP / request START");
     _server.send_P(200, "text/html", MAIN_page);
+    term.println("HTTP / request END");
   });
 
   _server.on("/getstates", []() {
@@ -24,11 +26,11 @@ void initXMLhttp() {
   });
 
   _server.on("/talk", []() {
-   talk();
-   _server.send(200, "text/html", "talk");
+    talk();
+    _server.send(200, "text/html", "talk");
   });
-  _server.on("/open", []() {
-    open();
+  _server.on("/door", []() {
+    unlock_door();
     _server.send(200, "text/html", "open");
   });
 
@@ -59,7 +61,7 @@ void getStates(bool smartthingReq, String origin) {
 
   //for html page
   String a = "debug " + String(debug ? "ACTIVE" : "OFF");
-  String b = "bell " + String(sensorValue >= threshold? "ACTIVE" : "INACTIVE");
+  String b = "bell " + String(sensorValue >= threshold ? "ACTIVE" : "INACTIVE");
   String c = "door " + String(digitalRead(DOOR) == PRESS ? "OPENING" : "CLOSED");
 
   //for both html page and hub
@@ -72,26 +74,25 @@ void getStates(bool smartthingReq, String origin) {
   //for smart hub only
   String door = "door " + String(digitalRead(DOOR) == PRESS ? "open" : "closed");
   String door_sw = "switch " + String(digitalRead(DOOR) == PRESS ? "on" : "off");
-  String acc = "acceleration " + String(sensorValue >= threshold? "active" : "inactive");
+  String acc = "acceleration " + String(sensorValue >= threshold ? "active" : "inactive");
 
-  b.toLowerCase(); // can't have upper case with hubs events
-  d.toLowerCase();  
-  
+  b.toLowerCase();  // can't have upper case with hubs events
+  d.toLowerCase();
+
   toSend = door + sep + door_sw + sep + b + sep + d + sep + acc + sep;
 
 
-  bool hubSend = runsim || smartthingReq || millis() - lastRefresh > 600000; 
+  bool hubSend = runsim || smartthingReq || millis() - lastRefresh > 600000;
   if (hubSend) {
     String c = "";
     for (int i = 0; i < toSend.length(); i++) {
       if (toSend.charAt(i) != ',') {
         c += toSend.charAt(i);
       } else {
-        term.println("UPDATING HUB: "+c);
+        term.println("UPDATING HUB: " + c);
         send_event(c);
         c = "";
       }
     }
   }
 }
-

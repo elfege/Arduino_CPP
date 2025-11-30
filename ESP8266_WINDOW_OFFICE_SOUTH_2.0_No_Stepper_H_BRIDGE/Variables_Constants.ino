@@ -57,10 +57,12 @@ unsigned long timeLastOpeningUpdate = millis();
 unsigned long lastNTP = millis();
 unsigned long millisBoot = millis();
 unsigned long lastLogMillis = millis();
+unsigned long last_refresh_millis = 60001 + Millis();
 
 String debugData = "";
 String previousDebugData = "";
 String previousDebugDataCmd = "";
+previousDebugDataCmd_ss = "";
 String previousDebugDataCmdBits = "";
 String previousDebugDataCmdLevel = "";
 String timeOfLastBoot = "";

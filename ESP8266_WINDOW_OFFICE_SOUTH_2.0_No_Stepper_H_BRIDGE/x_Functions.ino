@@ -1,32 +1,29 @@
 /* IDENTICAL TO THE OTHER WINDOW USING SAME THREADED ROD BASED ACTUATOR */
-void Open()
-{
+void Open() {
 
   // ULTRASLOW = ULTRASLOW_RESTORE; // for now we reset this value every time, learning process not being satisfactory
 
-  lastOperation = 1; // saveToRTC() called in safety()
+  lastOperation = 1;  // saveToRTC() called in safety()
 
   lastCmd = "open";
-  buildDebug("switch on"); // send a response so it is received through parse() method
 
-  boolean wasNotAlreadyFullyOpen = !isFullyOpen(); // prevent redundant pressure release at every command if already fully open
+  boolean wasNotAlreadyFullyOpen = !isFullyOpen();  // prevent redundant pressure release at every command if already fully open
 
-  if (!opening)
-  {
-
-    buildDebug("switch on"); // for alexa
-    buildDebug("window opening");
+  if (!opening) {
+    
+    term.println("OPENING");
+    updateHub("switch on");
+    updateHub("window opening");
 
     opening = true;
-    operationStartStamp = millis();                   // for the learning process, this must not change
-    unsigned long operationStartStampTEMP = millis(); // for the debug counter, this will change so can't be used as learning reference
+    operationStartStamp = millis();                    // for the learning process, this must not change
+    unsigned long operationStartStampTEMP = millis();  // for the debug counter, this will change so can't be used as learning reference
     closing = false;
     stopped = false;
     modifRequested = false;
-    previousMillisMotors = millis(); // store time of last execution
+    previousMillisMotors = millis();  // store time of last execution
 
-    dir = "A";
-    term.println("OPENING");
+    dir = "open";
     Move(dir);
     // starting push at SLOW speed instead of default ULTRASLOW
 
@@ -35,88 +32,68 @@ void Open()
     boolean wasclosed = false;
     unsigned long Start = millis();
 
-    if (!isOpen())
-    {
+    if (!isOpen()) {
       term.println("Waiting for state change");
 
-      while (!isOpen() && !stopped && millis() - Start < 6000) // when closed it'll need some extra force to pull the window out of its frame
+      while (!isOpen() && !stopped && millis() - Start < 6000)  // when closed it'll need some extra force to pull the window out of its frame
       {
         wasclosed = true;
-        serverAndHub();
-        stepcount++;
-        yield();
+        backOffFromLimitSwitch("opening")
       }
     }
-    if (wasclosed) // give this push ONLY if was closed before. Never when already open, for that might be fully open and then it'd force upon the shaft.
-    {
-      term.println("wasclosed true => 2 seconds delay..");
-      Start = millis();
-      while (millis() - Start < 1000)
-      {
-        serverAndHub();
-        yield();
-      }
-    }
-
+    
+    // resume normal opening operation
     analogWrite(pwm, ULTRASLOW);
     int seconds = 0;
     unsigned long lastChange = millis();
     unsigned long secondChange = millis();
     boolean adjusted = false;
-    while (!stopped && !isFullyOpen()) //&& stepcount < maxSteps)
+    while (!stopped && !isFullyOpen())  //&& stepcount < maxSteps)
     {
-      serverAndHub(); // allow to call Stop() or new speed without throwing any time consuming events (thrown from master())
+      serverAndHub();  // allow to call Stop() or new speed without throwing any time consuming events (thrown from master())
       stepcount++;
 
-      if (millis() - operationStartStampTEMP >= 5000)
-      {
+      if (millis() - operationStartStampTEMP >= 5000) {
         seconds += (millis() - operationStartStampTEMP) / 1000;
         term.println(String(seconds) + " seconds passed since cmd");
-        if (!doneLearning && (millis() - lastChange > 120000 && !adjusted) || (millis() - secondChange > 60000 && adjusted))
-        {
+        if (!doneLearning && (millis() - lastChange > 120000 && !adjusted) || (millis() - secondChange > 60000 && adjusted)) {
           adjusted = true;
           ULTRASLOW = ULTRASLOW < LEARNING_SPEED_LIMIT ? ULTRASLOW + 10 : ULTRASLOW;
           term.println("ULTRASLOW is now " + String(ULTRASLOW));
           lastChange = millis();
           secondChange = millis();
         }
-        if (!speedOverride)
-        {
+        if (!speedOverride) {
           analogWrite(pwm, ULTRASLOW);
-        }
-        else
-        {
+        } else {
           analogWrite(pwm, speedVal);
         }
         operationStartStampTEMP = millis();
       }
     }
     speedOverride = false;
-    doneLearning = 1; // permit ULTRASLOW learning only once, otherwise it gets increased at every final closure.
+    doneLearning = 1;  // permit ULTRASLOW learning only once, otherwise it gets increased at every final closure.
 
-    reverseStop();
+    backOffFromLimitSwitch();
 
-    if (isFullyOpen() && !stopped && wasNotAlreadyFullyOpen)
-    {
-      dir = "B";
-      Move(dir); // release pressure on limit switch
+    if (isFullyOpen() && !stopped && wasNotAlreadyFullyOpen) {
+      dir = "close";
+      Move(dir);  // release pressure on limit switch
       analogWrite(pwm, SLOW);
       Start = millis();
-      while (isFullyOpen() && !stopped && millis() - Start < 5000)
-      {
-        yield(); // prevent wdt delay crash
+      while (isFullyOpen() && !stopped && millis() - Start < 5000) {
+        yield();  // prevent wdt delay crash
         // term.println("Releasing pressure " + String(isFullyOpen()));
       }
 
-      delay(100); // let it run a bit more away from the switch
-      reverseStop();
+      delay(100);  // let it run a bit more away from the switch
+      backOffFromLimitSwitch();
       delay(100);
-      dir = "A";
-      Move(dir); // restore switch
+      dir = "open";
+      Move(dir);  // restore switch
       analogWrite(pwm, ULTRASLOW);
       Start = millis();
-      while (!isFullyOpen() && !stopped && millis() - Start < 10000)
-      {
+      while (!isFullyOpen() && !stopped && millis() - Start < 10000) {
         // yield(); // prevent wdt delay crash
         // term.println("restoring switch " + String(isOpen()));
         analogWrite(pwm, 0);
@@ -126,250 +103,193 @@ void Open()
         delay(30);
       }
       analogWrite(pwm, 0);
-    }
-    else
-    {
-      buildDebug("skipping pressure release: wasNotAlreadyFullyOpen true");
+    } else {
+      updateHub("skipping pressure release: wasNotAlreadyFullyOpen true");
     }
 
     analogWrite(pwm, 0);
     term.println("stopped = " + String(stopped) + "   ***********************");
     Stop();
+  } else {
+    updateHub("ignoring Redundant command..");
   }
-  else
-  {
-    buildDebug("ignoring Redundant command..");
-  }
-  previousMillisMotors = millis(); // store time of last execution
+  previousMillisMotors = millis();  // store time of last execution
   opening = false;
   speedOverride = false;
 }
 
-void Close()
-{
+void Close() {
 
   // ULTRASLOW = ULTRASLOW_RESTORE; // for now we reset this value every time, learning process not being satisfactory
 
-  lastOperation = 2; // saveToRTC() done in safety()
+  lastOperation = 2;  // saveToRTC() done in safety()
 
   lastCmd = "close";
-  buildDebug("switch off"); // send a response so it is received through parse() method
+  updateHub("switch off");  // send a response so it is received through updateHub() method
 
-  boolean wasWellOpen = isOpen(); // prevent redundant pressure release at every command if already closed
+  boolean wasWellOpen = isOpen();  // prevent redundant pressure release at every command if already closed
 
-  if (!closing) // prevent it from stopping a closing procedure
+  if (!closing)  // prevent it from stopping a closing procedure
   {
-    previousMillisMotors = millis(); // store time of last execution
+    previousMillisMotors = millis();  // store time of last execution
     closingcmdMillis = millis();
 
     term.println("CLOSING");
 
-    buildDebug("switch off"); // for Alexa
-    buildDebug("window closing");
+    updateHub("switch off");  // for Alexa
+    updateHub("window closing");
     opening = false;
     closing = true;
     operationStartStamp = millis();
     unsigned long operationStartStampTEMP = millis();
     stopped = false;
 
-    dir = "B";
+    dir = "close";
     Move(dir);
-    // starting push at SLOW speed instead of default ULTRASLOW
+    // starting push at SLOW speed instead of ULTRASLOW (which used to be default. Now default is SLOW anyway... )
     analogWrite(pwm, LEARNING_SPEED_LIMIT);
     boolean wasFullyOpen = false;
     unsigned long Start = millis();
-    while (isFullyOpen() && !stopped && millis() - Start < 4000)
-    {
+    while (isFullyOpen() && !stopped && millis() - Start < 4000) {
       wasFullyOpen = true;
       stepcount++;
-      yield(); // prevent wdt delay crash
+      yield();  // prevent wdt timeout crash
       serverAndHub();
     }
-    if (isFullyOpen())
-    {
+    if (isFullyOpen()) {
       // if still fully open that means speed is too slow, increase starting speed
       analogWrite(pwm, FAST);
-    }
-    if (wasFullyOpen) // give this extra push ONLY if was fully open when started. Never when not, for that might be fully open and then it'd force upon the shaft.
-    {
       Start = millis();
-      while (millis() - Start < 2000)
-      {
+      while (millis() - Start < 2000 && !stopped) {
         serverAndHub();
         yield();
       }
     }
-    analogWrite(pwm, ULTRASLOW);
+    analogWrite(pwm, ULTRASLOW); 
 
     int seconds = 0;
-    term.println("Waiting for state change...");
+    term.println("Waiting closed state...");
     unsigned long lastChange = millis();
     unsigned long secondChange = millis();
     boolean adjusted = false;
     analogWrite(pwm, ULTRASLOW);
-    while (!stopped && isOpen()) //&& stepcount < maxSteps)
+    while (isOpen() && !stopped)  //&& stepcount < maxSteps)
     {
       stepcount++;
-      if (millis() - operationStartStampTEMP >= 5000)
-      {
+      if (millis() - operationStartStampTEMP >= 5000) {
         seconds += (millis() - operationStartStampTEMP) / 1000;
         term.println(String(seconds) + " seconds passed since cmd");
-        if ((millis() - lastChange > 120000 && !adjusted) || (millis() - secondChange > 60000 && adjusted))
-        {
+        if ((millis() - lastChange > 120000 && !adjusted) || (millis() - secondChange > 60000 && adjusted)) {
           adjusted = true;
           ULTRASLOW = ULTRASLOW < LEARNING_SPEED_LIMIT ? ULTRASLOW + 50 : ULTRASLOW;
           term.println("ULTRASLOW is now " + String(ULTRASLOW));
           lastChange = millis();
           secondChange = millis();
         }
-        if (!speedOverride)
-        {
+        if (!speedOverride) {
           analogWrite(pwm, ULTRASLOW);
-        }
-        else
-        {
+        } else {
           analogWrite(pwm, speedVal);
         }
 
         operationStartStampTEMP = millis();
       }
 
-      serverAndHub(); // allow to call Stop() or new speed without throwing any time consuming events (thrown from master())
-      yield();        // prevent wdt delay crash
+      serverAndHub();  // allow to call Stop() or new speed without throwing any time consuming events (thrown from master())
       delay(10);
     }
     speedOverride = false;
 
-    reverseStop();
-    if (!isOpen() && !stopped && wasWellOpen)
-    {
-      dir = "A";
-      Move(dir); // release pressure on limit switch
-      analogWrite(pwm, SLOW);
-      unsigned long Start = millis();
-      while (!isOpen() && !stopped && millis() - Start < 5000)
-      {
-        yield(); // prevent wdt delay crash
-        //        term.println("Releasing pressure " + String(isOpen()));
-      }
-      delay(100); // let it run a bit more away from the switch
-      reverseStop();
-      delay(100);
-      dir = "B";
-      Move(dir); // restore switch
-      analogWrite(pwm, FAST);
+    backOffFromLimitSwitch();
+    while (!isOpen() && !stopped && wasWellOpen) {
+      
+       // close to restore contact with limit switch
+      dir = "close"; // closing
+      Move(dir); 
       Start = millis();
-      while (isOpen() && !stopped && millis() - Start < 10000)
-      {
-        //        yield(); // prevent wdt delay crash
-        // term.println("restoring switch " + String(isOpen()));
+      while (isOpen() && !stopped && millis() - Start < 1500) { // time value must remain way under watchdog timeout (about 6s if I remember correctly)
         analogWrite(pwm, 0);
-        delay(100);
-        analogWrite(pwm, FAST);
         yield();
-        delay(30);
+        delay(10);
+        analogWrite(pwm, SLOW);
+        delay(10);
       }
-      analogWrite(pwm, 0);
-    }
-    else
-    {
-      buildDebug("skipping pressure release: wasWellOpen false");
+      simpleStop()
+    } else {
+      updateHub("skipping pressure release: wasWellOpen false");
     }
     // term.println("stopped = " + String(stopped) + "   ***********************");
-    analogWrite(pwm, 0);
+    
     Stop();
-  }
-  else
-  {
-    buildDebug("ignoring Redundant command..");
+  } else {
+    updateHub("ignoring Redundant command..");
   }
   closing = false;
   speedOverride = false;
 }
-void calibrate()
-{
+
+void calibrate() {
   term.print("CALIBRATING");
-  while (isOpen())
-  {
+  while (isOpen()) {
     simpleClose();
   }
   term.println("CALIBRATION DONE!");
   stepcount = 0;
 }
-void simpleClose()
-{
+void simpleClose() {
   lastCmd = "close";
-  dir = "B";
-  if (isOpen() || !isFullyOpen())
-    ;
+  dir = "close";
   analogWrite(pwm, speedVal);
-  Move(dir);
+  Move(lastCmd);
 }
 
-void Move(String dir)
-{
-  if (dir == "A")
-  {
+void Move(String dir) {
+  if (dir == "open") {
     digitalWrite(C, 0);
     digitalWrite(D, 1);
-  }
-  else if (dir == "B")
-  {
+  } else if (dir == "close") {
     digitalWrite(C, 1);
     digitalWrite(D, 0);
-  }
-  else
-  {
+  } else {
     term.println("**************************UNDEFINED DIR!**************************");
   }
 }
-void reverseStop()
-{
 
-  if (dir == "B") // closing
-  {
-    digitalWrite(C, 0);
-    digitalWrite(D, 1);
-    analogWrite(pwm, FAST);
-  }
-  else if (dir == "A") // opening
-  {
-    digitalWrite(C, 1); // reverse stop it
-    digitalWrite(D, 0);
-    analogWrite(pwm, FAST);
-  }
-  delay(1);
-  digitalWrite(C, 0);
-  digitalWrite(D, 0);
-  analogWrite(pwm, 0);
+void backOffFromLimitSwitch(String operation) {
+
+   
+    if (operation == "opening" || operation = "backoofB4Closing")  
+    {
+      while (!isOpen() && !stopped && millis() - Start < 1500) {
+        Move("open")
+        analogWrite(pwm, SLOW);
+        delay(5); // by small increments
+        simpleStop()
+        serverAndHub(); 
+      }
+      simpleStop()
+      
+    } else if (operation == "closing" || operation = "backoofB4FullyOpen")
+    {
+      while (isFullyOpen() && !stopped && millis() - Start < 1500) {
+        Move("close") // back away from fullyOpen limit switch
+        analogWrite(pwm, SLOW);
+        delay(5); // by small increments
+        simpleStop()
+        serverAndHub(); 
+      }
+      simpleStop()
+    }
+    Stop()
 }
-void reverse()
-{
-  if (dir == "B") // closing
-  {
-    digitalWrite(C, 0);
-    digitalWrite(D, 1);
-  }
-  else if (dir == "A") // opening
-  {
-    digitalWrite(C, 1); // reverse stop it
-    digitalWrite(D, 0);
-  }
-  unsigned long Start = millis();
-  while (millis() - Start < 3000 && isOpen() && !isFullyOpen())
-  {
-    delay(1);
-  }
-  Stop();
-}
-void Stop()
-{
+
+void Stop() {
 
   analogWrite(pwm, 0);
   digitalWrite(C, 0);
   digitalWrite(D, 0);
 
-  lastOperation = 0; // saveToRTC() done in safety()
+  lastOperation = 0;  // saveToRTC() done in safety()
 
   lastCmd = "stop";
   closing = false;
@@ -377,112 +297,101 @@ void Stop()
   stopped = true;
   //  term.println("*****************************************STOP**************************************");
 }
-void simpleStop()
-{
+void simpleStop() {
   digitalWrite(C, 0);
   digitalWrite(D, 0);
 }
 
-boolean isOpen()
-{                                          // limit switch located at the end of the track
-  return digitalRead(contact_sensor_open); // if 1, then switch is released; return open true (window is open but not necessarily fully open)
+boolean isOpen() {                          // limit switch located at the end of the track
+  return digitalRead(contact_sensor_open);  // if 1, then switch is released; return open true (window is open but not necessarily fully open)
 }
-boolean isFullyOpen()
-{                                                // limit switch located near the motor
-  return !digitalRead(contact_sensor_fullyOpen); // if 0, then switch is pressed; return true (window fully open)
+boolean isFullyOpen() {                           // limit switch located near the motor
+  return !digitalRead(contact_sensor_fullyOpen);  // if 0, then switch is pressed; return true (window fully open)
 }
 
-void Refresh()
-{
+void Refresh() {
 
-  term.println("REFRESH CALLED!");
-  String var = "ERROR";
-  String var2 = "";
+  int refresh_interval = 60000
 
-  if (!isOpen() && !closing && !opening)
-  {
-    term.println("reporting contact closed");
-    var = "contact closed";
-    smartthing.send(var);
-    term.println("reporting window closed");
-    var2 = "window closed";
-  }
-  else if (isOpen() && !closing && !opening)
-  {
-    term.println("reporting contact open");
-    var = "contact open";
-    smartthing.send(var);
-    term.println("reporting window open");
-    var2 = "window open";
-  }
-  else if (!isOpen() && opening)
-  {
-    term.println("reporting contact closed");
-    var = "contact closed";
-    smartthing.send(var);
-    term.println("reporting window closed and opening");
-    var2 = "window closed_BUT_Opening";
-  }
-  // if open,is it open AND opening ?
-  else if (isOpen() && opening)
-  {
-    term.println("reporting contact open");
-    var = "contact open";
-    smartthing.send(var);
-    term.println("reporting window opening");
-    var2 = "window opening";
-  }
-  // or is it open AND closing ?
-  else if (isOpen() && closing)
-  {
-    term.println("reporting contact open");
-    var = "contact open";
-    smartthing.send(var);
-    term.println("reporting window closing");
-    var2 = "window closing";
-  }
+    if (Millis() - last_refresh_millis > refresh_interval) {
+    last_refresh_millis = Millis()
+                            term.println("REFRESH CALLED!");
+    String var = "ERROR";
+    String var2 = "";
 
-  if (stopped)
-  {
-    term.println("reporting window stopped");
-    var = "window stopped";
+    if (!isOpen() && !closing && !opening) {
+      term.println("reporting contact closed");
+      var = "contact closed";
+      smartthing.send(var);
+      term.println("reporting window closed");
+      var2 = "window closed";
+    } else if (isOpen() && !closing && !opening) {
+      term.println("reporting contact open");
+      var = "contact open";
+      smartthing.send(var);
+      term.println("reporting window open");
+      var2 = "window open";
+    } else if (!isOpen() && opening) {
+      term.println("reporting contact closed");
+      var = "contact closed";
+      smartthing.send(var);
+      term.println("reporting window closed and opening");
+      var2 = "window closed_BUT_Opening";
+    }
+    // if open,is it open AND opening ?
+    else if (isOpen() && opening) {
+      term.println("reporting contact open");
+      var = "contact open";
+      smartthing.send(var);
+      term.println("reporting window opening");
+      var2 = "window opening";
+    }
+    // or is it open AND closing ?
+    else if (isOpen() && closing) {
+      term.println("reporting contact open");
+      var = "contact open";
+      smartthing.send(var);
+      term.println("reporting window closing");
+      var2 = "window closing";
+    }
+
+    if (stopped) {
+      term.println("reporting window stopped");
+      var = "window stopped";
+    }
+
+    updateHub(var2);
+    delay(100);
+    RefreshSpeed();
+
+    windowLastState = isOpen() ? "windows is open" : "window is closed";  // not the same syntax than hub event, we want the verb...
   }
-
-  buildDebug(var2);
-  delay(100);
-  RefreshSpeed();
-
-  windowLastState = isOpen() ? "windows is open" : "window is closed"; // not the same syntax than hub event, we want the verb...
+  else {
+    term.println("Last refresh was less than " + String(refresh_interval / 1000) seconds ago.Skipping...)
+  }
 }
 
-void RefreshSpeed()
-{
+void RefreshSpeed() {
   int newSpeed = map(speedVal, ULTRASLOW, FAST, 1, 100);
   String var = "level " + String(newSpeed);
-  buildDebug(var);
-  buildDebug("10 bits speed value = " + String(speedVal));
+  updateHub(var);
+  updateHub("10 bits speed value = " + String(speedVal));
 }
 
-void buildDebug(String var) // called within Arduino C
+void updateHub(String var)  // called within Arduino C
 {
   _server.send(200, "text/html", var);
   term.println(var);
   if (logs)
     term.println(var + " at " + String(TimeInfos()));
 
-  if (var != previousDebugDataCmd && var != previousDebugDataCmdBits && previousDebugDataCmd != var)
-  {
+  if (var != previousDebugDataCmd && var != previousDebugDataCmdBits && previousDebugDataCmd != var) {
 
-    if (var.startsWith("8 bits"))
-    {
+    if (var.startsWith("8 bits")) {
       previousDebugDataCmdBits = var;
-    }
-    else if (var.startsWith("'level"))
-    {
+    } else if (var.startsWith("'level")) {
       previousDebugDataCmdLevel = var;
-    }
-    else
-    {
+    } else {
       previousDebugDataCmd = var;
     }
     // build the debug data string with timing values
@@ -490,74 +399,65 @@ void buildDebug(String var) // called within Arduino C
   }
 
   // if var contains a ST's qualifying event attribute's name
-  if (var.startsWith("switch") || var.startsWith("window") || var.startsWith("contact") || var.startsWith("level") || var.startsWith("boot OK"))
-  {
-    smartthing.send(var);
-    delay(100);
-    if (var != previousDebugDataCmd)
-    {
+  if (var.startsWith("switch") || var.startsWith("window") || var.startsWith("contact") || var.startsWith("level") || var.startsWith("boot OK")) {
+
+    if (var != previousDebugDataCmd) {
+      previousDebugDataCmd = var
+      smartthing.send(var);
+      delay(100);
       String ss = "'" + String(var) + "'" + " SENT TO ST";
-      if (ss != previousDebugDataCmd)
-      {
-        previousDebugDataCmd = ss;
+      if (ss != previousDebugDataCmd_ss) {
+        previousDebugDataCmd_ss = ss;
         debugData.concat(ss + " at " + String(TimeInfos()) + "\n");
       }
     }
   }
 }
 
-void getDataDebug() // called by JS
+void getDataDebug()  // called by JS
 {
   // send last updated value in getDebug()
 
   _server.send(200, "text/html", debugData);
-  if (debugData.length() > 50000)
-  {
+  if (debugData.length() > 50000) {
     debugData = "";
     previousDebugData = "";
     previousDebugDataCmd = "";
     previousDebugDataCmdBits = "";
     previousDebugDataCmdLevel = "";
-    logs = false; // stop sensor logs
-    buildDebug("DATA RESET");
+    logs = false;  // stop sensor logs
+    updateHub("DATA RESET");
   }
 }
-void getMac()
-{
+void getMac() {
   String var = WiFi.macAddress();
   _server.send(200, "text/html", var);
 }
-void getIP()
-{
+void getIP() {
   String var = WiFi.localIP().toString();
   _server.send(200, "text/html", var);
 }
-void getSSID()
-{
+void getSSID() {
   String var = String(WiFi.SSID());
   _server.send(200, "text/html", var);
 }
-void getRSSI()
-{
+void getRSSI() {
   String var = String(WiFi.RSSI());
   _server.send(200, "text/html", var);
 }
 
-void getSpeed()
-{
-  int newSpeed = map(speedVal, ULTRASLOW, FAST, 1, 100); // must use ULTRASLOW instead of ULTRASLOW as default minimal value
+void getSpeed() {
+  int newSpeed = map(speedVal, ULTRASLOW, FAST, 1, 100);  // must use ULTRASLOW instead of ULTRASLOW as default minimal value
   String var = String(newSpeed);
   _server.send(200, "text/html", var);
   //  delay(1000);
   var = "level " + String(newSpeed);
-  // buildDebug(var); ;
+  // updateHub(var); ;
 }
 
-void Blink(int times, int lapse)
-{
+void Blink(int times, int lapse) {
   int c = 0;
-  while (c < times)
-  {
+  while (c < times) {
     digitalWrite(LED, 1);
     delay(lapse);
     digitalWrite(LED, 0);
@@ -568,34 +468,30 @@ void Blink(int times, int lapse)
 
 //*****************************************************************************
 
-void Reset()
-{
+void Reset() {
   //  ESP.restart();
   hardReset();
 }
 
-void hardReset()
-{
-  ESP.reset(); // esp.reset is hard reset
+void hardReset() {
+  ESP.reset();  // esp.reset is hard reset
 }
 
 //*****************************************************************************
 // SMARTTHINGS CALLOUT  | | | | | | | | | | | | | | | | | | | | | | | | | | | |
 //                      V V V V V V V V V V V V V V V V V V V V V V V V V V V V
 //*****************************************************************************
-void messageCallout(String message)
-{
+void messageCallout(String message) {
 
   // Blink(5, 50);
 
   String mess = "Received message: '" + String(message) + "' ";
 
-  lastMessage = message; // update global
+  lastMessage = message;  // update global
   term.println(mess);
 
   // check if this message is a digit
-  if (isDigit(message.charAt(0)))
-  { //   -> TRUE
+  if (isDigit(message.charAt(0))) {  //   -> TRUE
     ///  see if there is a request for a different speed
     String thisMessage = message;
     char this_char[thisMessage.length() + 1];
@@ -606,15 +502,14 @@ void messageCallout(String message)
     term.println(my_integer_data);
 
     // now update and convert this integer into a pwm speed value
-    speedVal = map(my_integer_data, 1, 100, ULTRASLOW, FAST); // must use ULTRASLOW instead of ULTRASLOW as default minimal value
+    speedVal = map(my_integer_data, 1, 100, ULTRASLOW, FAST);  // must use ULTRASLOW instead of ULTRASLOW as default minimal value
 
     speedOverride = true;
     analogWrite(pwm, speedVal);
 
     // modulate speed accordingly in case it's already running
     modifRequested = true;
-    if (speedVal == FAST)
-    {
+    if (speedVal == FAST) {
       emergencySpeed = true;
       emergencySpeedMillis = millis();
     }
@@ -622,40 +517,29 @@ void messageCallout(String message)
 
     // inform ST that this value has been taken into consideration
     // reconvert to percentage
-    int newSpeed = map(speedVal, ULTRASLOW, FAST, 1, 100); // must use ULTRASLOW instead of ULTRASLOW as default minimal value
+    int newSpeed = map(speedVal, ULTRASLOW, FAST, 1, 100);  // must use ULTRASLOW instead of ULTRASLOW as default minimal value
     String var = "level " + String(newSpeed);
-    buildDebug(var);
+    updateHub(var);
     ;
-  }
-  else if (message.equals("open"))
-  {
+  } else if (message.equals("open")) {
     term.println("opening");
     Open();
-  }
-  else if (message.equals("close"))
-  {
+  } else if (message.equals("close")) {
     term.println("closing");
     Close();
-  }
-  else if (message.equals("stop"))
-  {
+  } else if (message.equals("stop")) {
     term.println("stopping");
     Stop();
-  }
-  else if (message.equals("refresh"))
-  {
+  } else if (message.equals("refresh")) {
     term.println("refreshing");
     Refresh();
-  }
-  else if (message.equals("reset"))
-  {
+  } else if (message.equals("reset")) {
     term.println("reseting");
     Reset();
   }
 }
 
-void log()
-{
+void log() {
 
   term.println("stopped  = " + String(stopped));
   term.println("STOP  = " + String(STOP));
@@ -738,33 +622,25 @@ void log()
   term.println("frequency  = " + String(frequency));
 }
 
-void updateNtpTime()
-{
+void updateNtpTime() {
 
   term.println("UPDATING TIME CLIENT... please wait...");
   timeClient.update();
   unsigned long Start = millis();
-  while (!timeClient.updated() && millis() - Start < 2000)
-  {
+  while (!timeClient.updated() && millis() - Start < 2000) {
     delay(1);
   }
-  if (!timeClient.updated())
-  {
+  if (!timeClient.updated()) {
     ntpFailures++;
-    if (ntpFailures < 10)
-    {
+    if (ntpFailures < 10) {
       term.println("******TIME FAILED TO UPDATE FROM NTP SERVER******");
-      ntpFailed = true; // loop will call updateNtpTime() again
-    }
-    else
-    {
+      ntpFailed = true;  // loop will call updateNtpTime() again
+    } else {
       term.println("******TOO MANY FAILS - CANCELLING ALL NTP REQUESTS UNTIL RESET******");
       stopNtp = true;
     }
-  }
-  else
-  {
-    if (ntpFailed) // if previous attempt failed, notify success
+  } else {
+    if (ntpFailed)  // if previous attempt failed, notify success
     {
       term.println("******TIME SUCCESSFULY UPDATED FROM NTP SERVER******");
     }

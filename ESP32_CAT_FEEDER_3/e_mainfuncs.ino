@@ -14,7 +14,7 @@ void feed() {
   term.println("PULLING SMALL PUSHER...");
   pull();           // start pulling out master arm
   feeding = false;  // allow proper arm pusherRetractCheck (otherwise arm is stuck at the bottom)
-  // cleanOpener();   // giving enough time to master arm to retract
+  // cleanOpener();   // giving enough time for master arm to retract
 
   feeding = true;  // must not be true before cleaning is done or master arm will pull all the way
   smallPull();     // timed function
@@ -106,7 +106,7 @@ void load() {
   deformOverride = true;
 
   int maxLoadTime = 55000;     // if reached, it's a fail => ONLY CONDITION WHEN REACHED is when there's been some serious deformation.
-  int optimaLoadTime = 37000;  // first rule timer: if any of the 2 sensors fails, operation can go on.
+  int optimaLoadTime = 42000; //37700;  // first rule timer: if any of the 2 sensors fails, operation can go on. DEPRECATED: 42000 we now leave more time for canInPosition() to take precedence. 
 
   // make sure the master arm is in proper position
   initialize_Master_Arm();  // required for timer's precision.
@@ -199,6 +199,11 @@ void openCan() {
   unsigned long Start = millis();
   unsigned long timer = millis();
   unsigned long interval = millis();  // interval between mandatory readjustments
+  unsigned long lastSimulatedFailedSPin = millis();  // simulate failed spin every n seconds to ensure proper readjustment of the can opener's blade
+  int simulatorInterval = 20000;
+
+  bool simulator = false; 
+
   // int intervalLimit = 30000;         // minimum time allowed without readjusting // DEPRECATED
   int duration = 150000;  // needs long time to desold the lid, but also not too long to prevent damaging the blade too fast
   int absoluteMaxDuration = 240000;
@@ -217,7 +222,14 @@ void openCan() {
     // The spin sensor being a relatively fragile and exposed moving part, the system should be able to ignore it after a certain point
     // instead of throwing an error an uselessly losing remaining functionality.
 
-    if (!spin || millis() - timer > 2000 && noSpinErrors < maxSpinErrors) {
+    // simulate failed spin every n seconds
+    if(millis() - lastSimulatedFailedSPin >= simulatorInterval){
+      lastSimulatedFailedSPin = millis();
+      simulator = true;
+    }
+
+    if (simulator || (!spin || millis() - timer > 2000 && noSpinErrors < maxSpinErrors)) {
+      simulator = false; // reset this boolean 
       term.println("CHECKING SPIN STATUS...");
       unsigned long s = millis();
       term.println("total elapsed time: " + String((millis() - Start) / 1000) + " seconds");
@@ -225,7 +237,7 @@ void openCan() {
       {
         mainHandler();
       }
-      if (!spin)  // if still not spinning, execute the recovery process
+      if (simulator || !spin)  // if still not spinning, execute the recovery process
       {
         noSpinErrors++;
         term.println("no spin events = " + String(noSpinErrors));
@@ -242,9 +254,11 @@ void openCan() {
         term.println("FALSE ALARM, SPIN Ok!");
       }
       timer = millis();
+      
     } else if (!spin && noSpinErrors >= maxSpinErrors) {
       term.println("No longer checking on spin errors and continuing operation while ignoring spin sensor");
     }
+    
   }
   unlock();
   verticalUp();
@@ -536,32 +550,20 @@ void verticalPush() {
   term.println("VERTICAL PUSH DOWN... ");
   cosinusPush();  // always push a bit
   Start = millis();
-  delay(500);  // no handler! precision required...
+  delay(600);  // no handler: precision required...
   cosinusStop();
 
   verticalDown();
-  Start = millis();
-  while (millis() - Start < 3400 && !stopped) {
-    // not all the way down, we need to pull cosinus back a bit first
-    mainHandler();
-  }
+  delay(1400); // not all the way down, we need to pull cosinus back a bit first
   verticalStop();
   cosinusPull();
   Start = millis();
   while (millis() - Start < 1500 && !stopped) {
-
     mainHandler();
   }
   cosinusStop();
-  verticalDown();
-  Start = millis();
-  while (millis() - Start < 600 && !stopped) {
-
-    // all the way down this time
-    mainHandler();
-  }
-  verticalStop();
-  verticalDownStep(70, 10);
+  
+  verticalDownStep(90, 30);
 
   goingdown = false;
   overrideImpact = false;  // enable impact Handler
@@ -584,18 +586,18 @@ void verticalPull() {
   while (millis() - Start < 300 && !stopped) {
     delay(1);
   }
+  cosinusStop();
 
   verticalUp();
   Start = millis();
-  while (millis() - Start < 1600 && !stopped) {
+  while (millis() - Start < 3000 && !stopped) {
     mainHandler();
   }
   cosinusStop();
   cosinusPull();
   Start = millis();
-  while (millis() - Start < 1000 && !stopped) {
-
-    mainHandler();
+  while (millis() - Start < 1500) {
+    delay(1);
   }
   verticalStop();
 }

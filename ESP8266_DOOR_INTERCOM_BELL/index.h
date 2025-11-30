@@ -184,7 +184,7 @@ const char MAIN_page[] PROGMEM = R"=====(
             <tr>
                 <td colspan="3" width="100%">
                     <h4 id="serial">Serial Output</h4>
-                    <iframe id="terminal" hidden src=""></iframe>
+                    <iframe id="terminal" hidden src="http://192.168.10.228/term.html"></iframe>
                 </td>
             </tr>
         </table>
@@ -414,6 +414,8 @@ const char MAIN_page[] PROGMEM = R"=====(
     }
 
     const clearAllIntervals = () => {
+        return
+        
         scriptOn = false;
         console.log("clearing intervals")
         clearInterval(checkStatesInterval);
