@@ -1,113 +1,121 @@
+//*****************************************************************************
+// SETUP - Runs once at boot
+//*****************************************************************************
+// Initializes all hardware, network, and services.
+// Order matters! Some components depend on others being ready.
+//*****************************************************************************
+
 void setup() {
-
-
-  unsigned long setupStart = millis();
-  //*****************************************************************************
-  //PINS CONFIGURATION
-  //*****************************************************************************
+  //--- Hardware pins ---
   pinConfig();
+  Blink(10, 50);  // Quick LED burst to show we're starting
 
-  Blink(10, 50);
+  //--- Serial debug output ---
+  Serial.begin(115200);
+  term.link(Serial);  // WiFiTerm echoes to Serial for USB debugging
 
-  //*****************************************************************************
-  //Changing PWM frequency from 1Khz default to 60khz
-  //*****************************************************************************
-  // analogWriteFreq(frequency);
-  // analogWriteResolution(10);
+  //--- OTA hostname (must be set before WiFi for mDNS) ---
+  ArduinoOTA.setHostname(NameOTA);
 
-
-  // setup debug serial port
-  Serial.begin(115200);  // setup serial with a baud rate of 115200
-  term.link(Serial);     //optional : echo every print() on Serial
-
-  // create OTA name
-
-  ArduinoOTA.setHostname(NameOTA);  // must be created before st initialization
-
-
-  //*****************************************************************************
-  //IoT HUB interface initialization
-  //*****************************************************************************
-  // callout function forward decalaration
-  // SmartThingsCallout_t messageCallout;
-  // setup default state of global variables
-  // isDebugEnabled = true;
-
-  //Run the SmartThings init() routine to make sure the ThingShield is connected to the ST Hub
-  // smartthing.init();
-  // term.println("ST initialized");
-
-
-  //*****************************************************************************
-  //NTP CLIENT INIT
-  //*****************************************************************************
-  // term.println("Starting TimeClient");
-  // timeClient.begin();
-
-  //******************************************************************************************
-  // WiFi Terminal
-  //******************************************************************************************
+  //--- WiFi Terminal (remote serial over WiFi) ---
   term.begin(_server);
-  term.println("WiFi Terminal ok!");
+  term.println("WiFiTerm ready");
 
-  //******************************************************************************************
-  // XML WEB SERVER INITIALIZATION
-  //******************************************************************************************
+  //--- HTTP endpoints ---
   initXMLhttp();
   _server.begin();
-  term.println("Ajax Web Server started");
+  term.println("HTTP server started on port 80");
 
-  //*****************************************************************************
-  //OTA initialization
-  //*****************************************************************************
+  //--- OTA update service ---
   OTAConfig();
 
-  // update hub
+  //--- Initial state report to hub ---
   Refresh();
 
-  Blink(3, 500);
-
-  term.println("REBOOT DONE");
+  //--- Startup complete indicator ---
+  Blink(3, 500);  // Slow blinks = ready
+  term.println("=== SETUP COMPLETE ===");
+  term.println("State: " + stateToString(currentState));
 }
+
+//*****************************************************************************
+// PIN CONFIGURATION
+//*****************************************************************************
+// Sets up GPIO pins for relay control and LED.
+// Initializes outputs to safe state (relays released).
+//*****************************************************************************
 
 void pinConfig() {
   pinMode(DOOR, OUTPUT);
   pinMode(TALK, OUTPUT);
   pinMode(LED, OUTPUT);
-  // pinMode(sensorPin, INPUT); // A0 always input...
+  // A0 (sensorPin) is always analog input on ESP8266, no pinMode needed
 
+  // Initialize to safe state - all relays released
   digitalWrite(DOOR, RELEASE);
   digitalWrite(TALK, RELEASE);
+  digitalWrite(LED, LOW);
 }
 
+//*****************************************************************************
+// OTA (Over-The-Air) UPDATE CONFIGURATION
+//*****************************************************************************
+// Enables firmware updates over WiFi without physical USB connection.
+//
+// CALLBACKS:
+//   onStart    - Called when upload begins
+//   onEnd      - Called when upload completes successfully
+//   onProgress - Called during upload with percentage
+//   onError    - Called if upload fails
+//
+// CRITICAL: During OTA upload, normal operations must stop (StopAll = true)
+// to give maximum resources to the upload process.
+//*****************************************************************************
 
 void OTAConfig() {
+
+  //--- Upload starting ---
   ArduinoOTA.onStart([]() {
-    term.println("Start");
-    StopAll = true;
+    term.println("OTA: Upload starting...");
+    StopAll = true;  // Stop all normal operations during upload
   });
+
+  //--- Upload complete ---
   ArduinoOTA.onEnd([]() {
-    term.println("\nEnd");
-    //digitalWrite(LED, 1);  //boot fails if pulled low, should be handeled by controller
-    //hardReset(); // ESP8266 needs hard reset after flashing // deletes all RTCVars
-    delay(100);     // allow OTA final ACK to transmit before reboot
-    ESP.restart();  // soft reset instead
+    term.println("OTA: Upload complete!");
+    delay(100);  // Allow final TCP ACK to transmit to IDE
+                 // ESP.restart();
+    ESP.reset();  // Reboot into new firmware // Hard reset (clears all memory WARNING: CLEARS RTC MEMORY AS WELL!)
   });
+
+  //--- Upload progress ---
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    term.printf("Progress: %u%%\r\n", (progress / (total / 100)));
-    term.handleClient();
-    digitalWrite(LED, !digitalRead(LED));
+    unsigned int percent = progress / (total / 100);
+    term.printf("OTA: %u%%\r\n", percent);
+    term.handleClient();                   // Keep terminal responsive during upload
+    digitalWrite(LED, !digitalRead(LED));  // Blink LED during upload
   });
+
+  //--- Upload error ---
   ArduinoOTA.onError([](ota_error_t error) {
-    term.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) term.println("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) term.println("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) term.println("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) term.println("Receive Failed");
-    else if (error == OTA_END_ERROR) term.println("End Failed");
-    digitalWrite(LED, 1);  //boot fails if pulled low, should be handeled by controller though
-    //hardReset();
+    term.printf("OTA ERROR [%u]: ", error);
+
+    switch (error) {
+      case OTA_AUTH_ERROR: term.println("Auth Failed"); break;
+      case OTA_BEGIN_ERROR: term.println("Begin Failed"); break;
+      case OTA_CONNECT_ERROR: term.println("Connect Failed"); break;
+      case OTA_RECEIVE_ERROR: term.println("Receive Failed"); break;
+      case OTA_END_ERROR: term.println("End Failed"); break;
+      default: term.println("Unknown Error"); break;
+    }
+
+    // Ensure LED is in safe state (not left LOW which would affect boot)
+    digitalWrite(LED, HIGH);
+
+    // Don't reset StopAll here - let the system recover naturally
+    // or user can manually reset
   });
+
   ArduinoOTA.begin();
-  term.println("ArduinoOTA Ready");
+  term.println("OTA: Ready (hostname: " + String(NameOTA) + ")");
 }
