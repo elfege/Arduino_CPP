@@ -24,6 +24,7 @@ Personal hobby projects built between 2018-2022, before formal software engineer
 - [Flagship Projects](#flagship-projects)
   - [Automated Cat Feeder](#automated-cat-feeder-esp32_cat_feeder_3)
   - [Adaptive Window Controller](#adaptive-window-controller-esp8266_window_living)
+  - [Remote PC Power Control](#remote-pc-power-control-esp8266_computer_office)
   - [Multi-MCU Robot Platform](#multi-mcu-robot-platform-mebo)
 - [Technical Challenges](#technical-challenges)
 - [Other Projects](#other-projects)
@@ -133,6 +134,64 @@ Recovery: Fall back to defaults if RTC data is corrupted
 ```
 
 **Technologies:** ESP8266, PWM, H-bridge motor control, RTC memory, NTP, state machines
+
+---
+
+### Remote PC Power Control (ESP8266_COMPUTER_OFFICE)
+
+**Problem:** Remote desktop and VPN are useless when the PC itself is frozen or needs a hard reboot. Software solutions fail when software fails.
+
+**Solution:** Hardware-level power control via ESP8266, integrated with Hubitat as a standard switch device.
+
+```mermaid
+graph LR
+    subgraph "Layered Reliability"
+        subgraph "Layer 1 - Software"
+            RDP[Remote Desktop]
+            VPN[SSL VPN]
+        end
+
+        subgraph "Layer 2 - ESP8266"
+            ESP[ESP8266<br/>Power Controller]
+            RELAY[Relay<br/>Power Button]
+            RESET[Reset Line<br/>Hard Reboot]
+        end
+
+        subgraph "Layer 3 - Z-Wave"
+            ZWAVE[Z-Wave Switch<br/>Power Monitoring]
+            OUTLET[Smart Outlet<br/>Last Resort Kill]
+        end
+    end
+
+    subgraph "Hubitat Integration"
+        HUB[Hubitat Hub]
+        SWITCH[Appears as<br/>Standard Switch]
+    end
+
+    VPN --> RDP
+    RDP -.->|"Frozen"| ESP
+    ESP --> RELAY
+    ESP --> RESET
+    RELAY --> PC[Office PC]
+    RESET --> PC
+    ZWAVE --> OUTLET
+    OUTLET --> PC
+    HUB --> ESP
+    HUB --> ZWAVE
+    ESP --> SWITCH
+```
+
+**Key Features:**
+
+- **Sleep/Wake control:** Put PC to sleep or wake via Hubitat, just like a light switch
+- **Hard reboot capability:** Simulate power button hold or reset line trigger when OS is frozen
+- **Layered failover:** ESP8266 for normal control, Z-Wave smart outlet as ultimate kill switch
+- **Power monitoring:** Z-Wave outlet tracks power consumption, confirms actual state
+- **Never lost access:** Years of operation without ever being locked out of remote PC
+
+**Why this matters:** Demonstrates thinking beyond the happy path. Software remote access assumes software is working. This project ensures hardware-level control when everything else fails.
+
+**Technologies:** ESP8266, relay control, Hubitat integration, Z-Wave coordination
 
 ---
 
