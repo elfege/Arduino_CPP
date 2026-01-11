@@ -142,46 +142,44 @@ Recovery: Fall back to defaults if RTC data is corrupted
 
 ### Remote PC Power Control (ESP8266_COMPUTER_OFFICE)
 
-**Problem:** Remote desktop and VPN are useless when the PC itself is frozen or needs a hard reboot. Software solutions fail when software fails.
+**Problem:** When a PC freezes or needs a hard reboot, software solutions fail. You need hardware-level control.
 
-**Solution:** Hardware-level power control via ESP8266, integrated with Hubitat as a standard switch device.
+**Solution:** ESP8266-based power controller accessible via SSL VPN - either directly through its web UI, via Hubitat hub, or through a custom dashboard.
 
 ```mermaid
 graph LR
     subgraph "Layered Reliability"
-        subgraph "Layer 1 - Software"
-            RDP[Remote Desktop]
-            VPN[SSL VPN]
-        end
-
-        subgraph "Layer 2 - ESP8266"
+        subgraph "Layer 1 - ESP8266"
             ESP[ESP8266<br/>Power Controller]
+            WEBUI[Built-in Web UI]
             RELAY[Relay<br/>Power Button]
             RESET[Reset Line<br/>Hard Reboot]
         end
 
-        subgraph "Layer 3 - Z-Wave"
+        subgraph "Layer 2 - Z-Wave"
             ZWAVE[Z-Wave Switch<br/>Power Monitoring]
             OUTLET[Smart Outlet<br/>Last Resort Kill]
         end
     end
 
-    subgraph "Hubitat Integration"
+    subgraph "Access Methods"
+        VPN[SSL VPN<br/>Remote Access]
         HUB[Hubitat Hub]
-        SWITCH[Appears as<br/>Standard Switch]
+        TILES[Custom Tiles<br/>Dashboard]
     end
 
-    VPN --> RDP
-    RDP -.->|"Frozen"| ESP
+    VPN --> ESP
+    VPN --> HUB
+    HUB --> ESP
+    TILES --> HUB
+    ESP --> WEBUI
     ESP --> RELAY
     ESP --> RESET
     RELAY --> PC[Office PC]
     RESET --> PC
     ZWAVE --> OUTLET
     OUTLET --> PC
-    HUB --> ESP
     HUB --> ZWAVE
-    ESP --> SWITCH
 ```
 
 **Key Features:**
