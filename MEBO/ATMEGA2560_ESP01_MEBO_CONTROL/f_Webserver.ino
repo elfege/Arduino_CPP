@@ -9,8 +9,8 @@ SoftwareSerial Serial2(17, 16); // RX, TX
 #endif
 
 
-char ssida[] = "WIFI_SSID2";            // your network SSID (name)
-char passa[] = "WIFI_PASSWORDGahsh4479#$";      // your network password
+char ssida[] = WIFI_SSID2;            // your network SSID (name)
+char passa[] = WIFI_PASSWORD;      // your network password
 
 int ledStatus = LOW;
 int status = WL_IDLE_STATUS;

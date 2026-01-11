@@ -1,9 +1,9 @@
 //******************************************************************************************
 //ESP8266 WiFi Information    CHANGE THIS INFORMATION ACCORDINGLY FOR YOUR NETWORK!
 //******************************************************************************************
-String str_ssid     = "WIFI_SSID2";                           //  <---You must edit this line!
-String str_ssid2     = "WIFI_SSID";
-String str_password = "WIFI_PASSWORDGahsh4479#$";                   //  <---You must edit this line!
+String str_ssid     = WIFI_SSID2;                           //  <---You must edit this line!
+String str_ssid2     = WIFI_SSID;
+String str_password = "xxxxxxxxxxxxxxxxxxxxxxx";                   //  <---You must edit this line!
 
 
 IPAddress iptoping (192, 168, 10, 2);   // The remote ip to ping

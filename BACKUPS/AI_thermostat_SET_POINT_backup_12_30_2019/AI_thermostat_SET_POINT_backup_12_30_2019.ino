@@ -1,7 +1,7 @@
 definition(
     name: "A.I. Thermostat Set Point Manager",
     namespace: "elfege",
-    author: "WIFI_SSID",
+    author: WIFI_SSID,
 
     description: """This A.I. will manage a thermostat using inputs from different sources and help you save energy:
 - contact sensors

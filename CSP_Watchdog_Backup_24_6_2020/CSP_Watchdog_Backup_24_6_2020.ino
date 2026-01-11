@@ -9,7 +9,7 @@ import groovy.json.JsonOutput
 definition(
     name: "CSP Watchdog",
     namespace: "elfege",
-    author: "WIFI_SSID",
+    author: WIFI_SSID,
 
     description: """Check that cron service is running properly and or that a switch is responding in a timely fashion
 and/or a remote hub is responsive, if not, then reboot the hub (or the remote hub)""",

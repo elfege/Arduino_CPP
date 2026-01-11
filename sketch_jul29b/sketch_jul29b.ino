@@ -3,8 +3,8 @@
 //Please open Serial terminal and follow instructions
 //
 #include <WebServer.h>
-const char* ssid = "WIFI_SSID";     //adjust to your own values
-const char* password = "WIFI_PASSWORDGahsh4479#$"; //adjust to your own values
+const char* ssid = WIFI_SSID;     //adjust to your own values
+const char* password = WIFI_PASSWORD; //adjust to your own values
 
 
 #include "WiFiTerm.h"

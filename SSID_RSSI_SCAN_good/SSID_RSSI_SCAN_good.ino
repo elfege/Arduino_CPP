@@ -1,4 +1,5 @@
-
+// NOTE: Create secrets.h from secrets.h.example with your WiFi credentials
+#include "secrets.h"
 
 /*SCAN SSID AND RETURNS RSSI*/
 
@@ -7,7 +8,7 @@
 #include <ccspi.h>
 #include <SPI.h>
 
-// may need to re-insert libraries... THIS IS THE REAL GOOD ONE NO DOUBT 
+// may need to re-insert libraries... THIS IS THE REAL GOOD ONE NO DOUBT
 
 
 // These are the interrupt and control pins
@@ -22,12 +23,12 @@ Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ
 
 
 
-//SSID of your network
-#define WLAN_SSID       "WIFI_SSID_0"
-char ssid[] = "WIFI_SSID_0";
-//password of your WPA Network
-#define WLAN_PASS       "DFjuivb2013"
-char pass[] = "DFjuivb2013";
+//SSID of your network - set in secrets.h
+#define WLAN_SSID       WIFI_SSID
+char ssid[] = WIFI_SSID;
+//password of your WPA Network - set in secrets.h
+#define WLAN_PASS       WIFI_PASSWORD
+char pass[] = WIFI_PASSWORD;
 #define WLAN_SECURITY  WLAN_SEC_WPA2
 
 int CharN = 7;

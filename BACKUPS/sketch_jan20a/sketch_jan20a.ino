@@ -1,7 +1,7 @@
 definition(
     name: "Thermostat Manager",
     namespace: "elfege",
-    author: "WIFI_SSID",
+    author: WIFI_SSID,
 
     description: "Manage your thermostats with contact sensors, motion sensors and boost operations",
 

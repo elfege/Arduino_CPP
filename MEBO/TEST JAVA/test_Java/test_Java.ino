@@ -17,8 +17,8 @@ uint8_t pin_led = 2;
 WebServer server(80);
 
 //Enter your SSID and PASSWORD
-const char* ssid = "WIFI_SSID";
-const char* password = "WIFI_PASSWORDGahsh4479#$";
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 
 //===============================================================
 // This routine is executed when you open its IP in browser

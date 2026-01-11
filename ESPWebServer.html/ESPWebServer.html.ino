@@ -25,8 +25,8 @@ SoftwareSerial Serial1(19, 18); // RX, TX
 SoftwareSerial Serial2(17, 16); // RX, TX
 #endif
 
-char ssid[] = "WIFI_SSID2";            // your network SSID (name)
-char pass[] = "WIFI_PASSWORDGahsh4479#$";        // your network password
+char ssid[] = WIFI_SSID2;            // your network SSID (name)
+char pass[] = WIFI_PASSWORD;        // your network password
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
 int reqCount = 0;                // number of requests received
 

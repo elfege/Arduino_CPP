@@ -1,3 +1,6 @@
+// NOTE: Create secrets.h from secrets.h.example with your WiFi credentials
+#include "secrets.h"
+
 // Include the Arduino Stepper Library
 #include <Stepper.h>
 
@@ -27,8 +30,8 @@ Stepper myStepper(stepsPerRevolution, 8, 9, 11, 12);
 // On an UNO, SCK = 13, MISO = 12, and MOSI = 11
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,
                          SPI_CLOCK_DIVIDER); // you can change this clock speed
-#define WLAN_SSID       "WIFI_SSID"           // cannot be longer than 32 characters!
-#define WLAN_PASS       "WIFI_PASSWORDGahsh4479#$"
+#define WLAN_SSID       WIFI_SSID          // Set in secrets.h
+#define WLAN_PASS       WIFI_PASSWORD      // Set in secrets.h
 // Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
 #define WLAN_SECURITY   WLAN_SEC_WPA2
 #define LISTEN_PORT           80

@@ -1,7 +1,7 @@
 definition(
     name: "A.I. Thermostat Set Point Manager",
     namespace: "elfege",
-    author: "WIFI_SSID",
+    author: WIFI_SSID,
 
     description: """
 

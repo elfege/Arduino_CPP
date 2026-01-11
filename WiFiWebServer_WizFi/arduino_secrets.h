@@ -1,0 +1,3 @@
+#define SECRET_SSID "WIFI_SSID2"
+#define SECRET_PASS "WIFI_PASSWORDGahsh4479#$"
+

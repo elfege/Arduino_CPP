@@ -38,8 +38,8 @@
 
 #include <WiFiUdp.h>
 
-char ssid[] = "WIFI_SSID";             // your network SSID (name)
-char pass[] = "WIFI_PASSWORDGahsh4479#$";         // your network password
+char ssid[] = WIFI_SSID;             // your network SSID (name)
+char pass[] = WIFI_PASSWORD;         // your network password
 
 unsigned long lastNTP = millis();
 

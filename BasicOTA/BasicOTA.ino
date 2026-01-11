@@ -3,8 +3,8 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
-const char* ssid = "WIFI_SSID2";
-const char* password = "WIFI_PASSWORDGahsh4479#$"; 
+const char* ssid = WIFI_SSID2;
+const char* password = WIFI_PASSWORD; 
 
 void setup() {
   Serial.begin(115200);

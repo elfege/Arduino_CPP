@@ -1,7 +1,7 @@
 definition(
     name: "Thermostat Manager",
     namespace: "elfege",
-    author: "WIFI_SSID",
+    author: WIFI_SSID,
 
     description: """Manages your thermostats 
 

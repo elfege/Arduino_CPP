@@ -29,7 +29,7 @@ void setup() {
         delay(1000);
     }
 
-    WiFi.begin("WIFI_SSID2", "WIFI_PASSWORDGahsh4479#$");
+    WiFi.begin(WIFI_SSID2, WIFI_PASSWORD);
 
 }
 

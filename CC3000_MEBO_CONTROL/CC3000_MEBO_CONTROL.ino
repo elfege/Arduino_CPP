@@ -52,6 +52,9 @@
   Written by Limor Fried & Kevin Townsend for Adafruit Industries.  
   BSD license, all text above must be included in any redistribution      
  ****************************************************/
+// NOTE: Create secrets.h from secrets.h.example with your WiFi credentials
+#include "secrets.h"
+
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
 #include "utility/debug.h"
@@ -68,8 +71,8 @@
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,
                                          SPI_CLOCK_DIVIDER); // you can change this clock speed
 
-#define WLAN_SSID       "WIFI_SSID2"   // cannot be longer than 32 characters!
-#define WLAN_PASS       "WIFI_PASSWORDGahsh4479#$"
+#define WLAN_SSID       WIFI_SSID2         // Set in secrets.h (WIFI_SSID2 network)
+#define WLAN_PASS       WIFI_PASSWORD      // Set in secrets.h
 // Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
 #define WLAN_SECURITY   WLAN_SEC_WPA2
 
