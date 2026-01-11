@@ -85,6 +85,7 @@ graph TB
 ```
 
 **Key Features:**
+
 - Can loading and opening mechanism with motor feedback
 - Weight and fill level monitoring for jam detection
 - 3-hub failover for reliability (if primary hub fails, device reports to backup)
@@ -120,12 +121,14 @@ graph LR
 ```
 
 **Key Features:**
+
 - **Adaptive speed learning:** Adjusts motor timing based on observed performance
 - **RTC memory persistence:** Learned speeds survive soft resets (not full power loss)
 - **Fail-safe boot detection:** After 3 rapid reboots, enters safe mode to prevent boot loops
 - **Multiple motor variants:** Stepper, PWM with H-bridge, linear actuator versions
 
 **Technical Challenge - Speed Learning:**
+
 ```
 Initial calibration: Run motor at known speed, measure time to fully open/close
 Runtime adaptation: If motor stalls or overshoots, adjust speed profile
@@ -240,6 +243,7 @@ graph TB
 ```
 
 **Key Features:**
+
 - **Dual-core ESP32:** Web server on Core 0, real-time motor/encoder on Core 1
 - **ATmega2560 sensor hub:** Dedicated processor for sensor polling and filtering
 - **Multiple communication protocols:** I2C for sensors, UART for inter-MCU commands
@@ -247,6 +251,8 @@ graph TB
 - **Archived variants:** Project includes evolution from single-MCU to distributed architecture
 
 **Technologies:** ESP32, ATmega2560, I2C, UART, dual-core programming, encoder feedback control
+
+**Demo:** [Video of MEBO autonomous navigation](https://elfege.com/videos/mebo.mp4) (1:36) - Shows the robot undocking, navigating a living room, and avoiding obstacles with 100% autonomous decision-making.
 
 ---
 
@@ -257,6 +263,7 @@ graph TB
 **Challenge:** Samsung AC IR codes are 199 bytes each. With 20+ temperature/mode combinations, SRAM quickly exhausts on ESP8266 (80KB total, ~50KB usable).
 
 **Solution:**
+
 - Store IR codes in PROGMEM (flash memory)
 - Load single code to SRAM buffer only when transmitting
 - RTC memory for state persistence (4 bytes vs re-storing full code)
@@ -268,9 +275,11 @@ graph TB
 **Challenge:** Smart home hubs occasionally go offline. Devices shouldn't become uncontrollable.
 
 **Solution:** Dual SSID support with 3-hub callback system:
+
 ```
 Primary Hub (192.168.1.x) -> Backup Hub 1 (192.168.2.x) -> Backup Hub 2 (192.168.3.x)
 ```
+
 Device attempts callback to each hub in sequence until successful.
 
 ### Boot Loop Prevention
@@ -278,6 +287,7 @@ Device attempts callback to each hub in sequence until successful.
 **Challenge:** Configuration errors or hardware issues can cause infinite reboot loops.
 
 **Solution:** Boot counter in RTC memory:
+
 - Increment counter on boot
 - If counter > 3 within 60 seconds, enter fail-safe mode
 - Fail-safe mode: disable problematic features, enable web UI for diagnostics
@@ -288,12 +298,14 @@ Device attempts callback to each hub in sequence until successful.
 ## Other Projects
 
 ### Pet Care
+
 | Project | MCU | Description |
 |---------|-----|-------------|
 | ESP32_DRY_FOOD_CATFEEDER | ESP32 | Dry food dispenser with weight monitoring |
 | CATGENIE_RESET | ATmega | I2C EEPROM reset for litter box cartridges |
 
 ### Window/Curtain Automation
+
 | Project | MCU | Description |
 |---------|-----|-------------|
 | ESP8266_WINDOW_BEDROOM_* | ESP8266 | Multiple variants: stepper, PWM, H-bridge |
@@ -303,21 +315,24 @@ Device attempts callback to each hub in sequence until successful.
 | ESP8266_CURTAINS_LIVING | ESP8266 | Living room curtain automation |
 
 ### Sensors & Utilities
+
 | Project | MCU | Description |
 |---------|-----|-------------|
 | ESP8266_BED_SENSOR | ESP8266 | Bed occupancy detection |
-| ESP8266_MOTION_SENSOR | ESP8266 | PIR sensor with SmartThings integration |
+| ESP8266_MOTION_SENSOR | ESP8266 | PIR sensor with SmartThings/Hubitat integration |
 | ESP8266_DOOR_INTERCOM_BELL | ESP8266 | Auto door unlock on intercom ring |
 | ESP8266_WaterTankPurge | ESP8266 | Scheduled water tank maintenance |
 | IR_TV | ESP8266 | IR remote control for TV |
 
 ### Robotics
+
 | Project | MCU | Description |
 |---------|-----|-------------|
 | ESP32_KOBRA_2020 | ESP32 | Mobile rover with dual-core motor control |
 | ESP8266_KOBRA_2.0_JS | ESP8266 | Rover power controller |
 
 ### Deprecated
+
 | Project | MCU | Status |
 |---------|-----|--------|
 | ESP8266_AC_BEDROOM_* | ESP8266 | Replaced by Hubitat Groovy drivers |
@@ -401,6 +416,7 @@ All projects use `secrets.h` for WiFi credentials (excluded from git):
 ## Author
 
 **Elfege Leylavergne**
+
 - Website: [elfege.com](https://elfege.com)
 - GitHub: [github.com/elfege](https://github.com/elfege)
 - LinkedIn: [linkedin.com/in/elfege](https://www.linkedin.com/in/elfege/)
