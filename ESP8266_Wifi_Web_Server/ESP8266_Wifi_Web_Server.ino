@@ -47,7 +47,7 @@ void setup() {
   clearSerialBuffer();
 
   //connect to router
-  connectWiFi(WIFI_SSID, WIFI_PASSWORD);
+  connectWiFi(WIFI_SSID, PASSWORD);
 
   //test if the module is ready
   dbgTerminal.print("AT : ");

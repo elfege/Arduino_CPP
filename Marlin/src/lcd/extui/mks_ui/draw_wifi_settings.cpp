@@ -38,7 +38,7 @@ enum {
   ID_WIFI_RETURN = 1,
   ID_WIFI_MODEL,
   ID_WIFI_NAME,
-  ID_WIFI_PASSWORD,
+  ID_PASSWORD,
   ID_WIFI_CLOUD,
   ID_WIFI_CONFIG
 };
@@ -69,7 +69,7 @@ static void event_handler(lv_obj_t *obj, lv_event_t event) {
       lv_clear_wifi_settings();
       lv_draw_keyboard();
       break;
-    case ID_WIFI_PASSWORD:
+    case ID_PASSWORD:
       keyboard_value = wifiPassWord;
       lv_clear_wifi_settings();
       lv_draw_keyboard();
@@ -114,7 +114,7 @@ void lv_draw_wifi_settings() {
   lv_ex_line(line2, line_points[1]);
 
   lv_obj_t *labelPassWordText = lv_label_create(scr, PARA_UI_POS_X, PARA_UI_POS_Y * 3 + 10, nullptr);
-  lv_obj_t *buttonPassWordValue = lv_btn_create(scr, PARA_UI_VALUE_POS_X, PARA_UI_POS_Y * 3 + PARA_UI_VALUE_V, PARA_UI_VALUE_BTN_X_SIZE, PARA_UI_VALUE_BTN_Y_SIZE, event_handler, ID_WIFI_PASSWORD);
+  lv_obj_t *buttonPassWordValue = lv_btn_create(scr, PARA_UI_VALUE_POS_X, PARA_UI_POS_Y * 3 + PARA_UI_VALUE_V, PARA_UI_VALUE_BTN_X_SIZE, PARA_UI_VALUE_BTN_Y_SIZE, event_handler, ID_PASSWORD);
   lv_obj_t *labelPassWordValue = lv_label_create_empty(buttonPassWordValue);
 
   lv_obj_t *line3 = lv_line_create(scr, nullptr);

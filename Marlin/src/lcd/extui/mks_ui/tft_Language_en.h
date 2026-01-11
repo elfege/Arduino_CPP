@@ -493,7 +493,7 @@
 #define TEXT_WIFI_LETTER_EN     "abc"
 #define TEXT_WIFI_DIGITAL_EN    "123"
 #define TEXT_WIFI_SYMBOL_EN     "#+="
-#define TEXT_WIFI_PASSWORD_EN   "Password"
+#define TEXT___PASSWORD___EN   "Password"
 
 #define TEXT_WIFI_JOINING_EN  "Joining Network..."
 #define TEXT_WIFI_FAILED_JOIN_EN  "Failed to Join Wi-Fi"

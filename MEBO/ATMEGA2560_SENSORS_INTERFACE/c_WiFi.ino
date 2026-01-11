@@ -7,7 +7,7 @@
 //ESP32 WiFi Information
 //******************************************************************************************
 //String str_ssid     = WIFI_SSID;                           // SSID - set in secrets.h
-//String str_password = WIFI_PASSWORD;                   // password - set in secrets.h
+//String str_password = PASSWORD;                   // password - set in secrets.h
 //IPAddress ip(192, 168, 10, 221);       //Device IP Address       //  <---You must edit this line!
 //IPAddress gateway(192, 168, 10, 1);    //Router gateway          //  <---You must edit this line!
 //IPAddress subnet(255, 255, 255, 0);   //LAN subnet mask         //  <---You must edit this line!

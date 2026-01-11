@@ -45,7 +45,7 @@ void outletTwoOff();
 
 // Change this before you flash
 const char* ssid = WIFI_SSID;
-const char* password = WIFI_PASSWORD;
+const char* password = PASSWORD;
 
 boolean wifiConnected = false;
 

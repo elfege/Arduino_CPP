@@ -15,7 +15,7 @@ const char* ssidChar = "CM_2G";
 // Backup SSID (tried if primary fails)
 const char* ssidChar2 = WIFI_SSID;
 // Password (same for both networks in this setup)
-const char* passwordChar = WIFI_PASSWORD;
+const char* passwordChar = PASSWORD;
 
 //--- Static IP configuration ---
 // Using static IP ensures the device is always reachable at the same address.
@@ -58,7 +58,7 @@ ESP8266WebServer _server(80);
 //
 // String str_ssid = "CM_2G";
 // String str_ssid2 = WIFI_SSID;
-// String str_password = WIFI_PASSWORD;
+// String str_password = PASSWORD;
 //
 // const IPAddress iptoping (192, 168, 10, 2);   // Unused
 // const IPAddress remote_ip(192, 168, 10, 1);   // Unused

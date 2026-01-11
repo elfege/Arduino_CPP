@@ -15,7 +15,7 @@ MDNSResponder mdns;
 
 // Replace with your network credentials
 const char* ssid = WIFI_SSID;
-const char* password = WIFI_PASSWORD;
+const char* password = PASSWORD;
 
 ESP8266WebServer server(80);
 

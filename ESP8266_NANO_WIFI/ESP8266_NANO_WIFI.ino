@@ -24,7 +24,7 @@ void setup()
   Serial.println("AT+CWMODE=1");
   //Connect to our Wireless network NOTE: change SSID to your wireless
   //network and PASSWORD to the key used to join the network.
-    Serial.println(String("AT+CWJAP=\"WIFI_SSID\",\"") + WIFI_PASSWORD + "\"");
+    Serial.println(String("AT+CWJAP=\"WIFI_SSID\",\"") + PASSWORD + "\"");
   //Once again blink some lights because it is fun!
   blinkcode();
 }

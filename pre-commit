@@ -9,7 +9,7 @@ trap 'cleanup' EXIT INT TSTP ERR
 
 export ssid_pattern_1='WIFI_SSID'
 export ssid_pattern_2='WIFI_SSID2'
-export password_pattern='WIFI_PASSWORD'
+export password_pattern='PASSWORD'
 
 start_spinner 120 "Looking for files containing wifi password"
 readarray -t FILES_WITH_PASSWORD < <(grep -rlE "$password_pattern" . --exclude="secrets.h" --exclude-dir=".git")
@@ -34,7 +34,7 @@ for file in "${FILES_WITH_PASSWORD[@]}"; do
 	filename="$(basename "$file")"
 	# start_spinner 120 "Redacting password in $filename"
 	echo "Redacting password in $file"
-	sed -i -E "s/${password_pattern}/WIFI_PASSWORD/g" "$file" # &>/dev/null 
+	sed -i -E "s/${password_pattern}/PASSWORD/g" "$file" # &>/dev/null 
 done
 
 for file in "${FILES_WITH_SSID_1[@]}"; do

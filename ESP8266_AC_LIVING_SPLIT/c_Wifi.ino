@@ -7,9 +7,9 @@
 
 String str_ssid     = WIFI_SSID;                           // SSID - set in secrets.h
 String str_ssid2     = WIFI_SSID2;                           // SSID2 - set in secrets.h
-String str_password = WIFI_PASSWORD;                   // password - set in secrets.h
+String str_password = PASSWORD;                   // password - set in secrets.h
 char ssid[] = WIFI_SSID;             // SSID - set in secrets.h
-char pass[] = WIFI_PASSWORD;         // password - set in secrets.h
+char pass[] = PASSWORD;         // password - set in secrets.h
 IPAddress ip(192, 168, 10, 212);       // Device IP Address      //  <---You must edit this line!
 IPAddress gateway(192, 168, 10, 1);    //router gateway          //  <---You must edit this line!
 IPAddress subnet(255, 255, 255, 0);   //LAN subnet mask         //  <---You must edit this line!

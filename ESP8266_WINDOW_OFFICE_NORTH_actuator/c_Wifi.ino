@@ -6,9 +6,9 @@
 //******************************************************************************************
 String str_ssid     = WIFI_SSID;                           // SSID - set in secrets.h
 String str_ssid2     = WIFI_SSID2;                           // SSID2 - set in secrets.h
-String str_password = WIFI_PASSWORD;                   // password - set in secrets.h
+String str_password = PASSWORD;                   // password - set in secrets.h
 const char *ssid     = WIFI_SSID2;
-const char *password = WIFI_PASSWORD;         // FAIL SAFE BOOT WIFI PARAMEERS
+const char *password = PASSWORD;         // FAIL SAFE BOOT WIFI PARAMEERS
 IPAddress iptoping (192, 168, 10, 2);   // The remote ip to ping
 IPAddress ip(192, 168, 10, 206);       // Device IP Address      //  <---You must edit this line!
 IPAddress gateway(192, 168, 10, 1);    //router gateway          //  <---You must edit this line!

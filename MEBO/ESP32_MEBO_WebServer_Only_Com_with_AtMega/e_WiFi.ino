@@ -1,5 +1,5 @@
 const char* ssid     = WIFI_SSID2;
-const char* password = WIFI_PASSWORD;
+const char* password = PASSWORD;
 
 IPAddress ip(192, 168, 10, 222);       //Device IP Address       //  <---You must edit this line!
 IPAddress gateway(192, 168, 10, 1);    //Router gateway          //  <---You must edit this line!

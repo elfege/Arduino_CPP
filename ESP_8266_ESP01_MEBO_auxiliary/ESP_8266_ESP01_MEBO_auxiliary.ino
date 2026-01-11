@@ -14,7 +14,7 @@
 #define LED 1
 
 const char* ssid     = WIFI_SSID2;
-const char* password = WIFI_PASSWORD;
+const char* password = PASSWORD;
 
 IPAddress ip(192, 168, 10, 105);
 IPAddress gateway(192, 168, 10, 1);

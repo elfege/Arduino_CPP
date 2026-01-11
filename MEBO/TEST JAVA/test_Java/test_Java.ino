@@ -18,7 +18,7 @@ WebServer server(80);
 
 //Enter your SSID and PASSWORD
 const char* ssid = WIFI_SSID;
-const char* password = WIFI_PASSWORD;
+const char* password = PASSWORD;
 
 //===============================================================
 // This routine is executed when you open its IP in browser

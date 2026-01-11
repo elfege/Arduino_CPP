@@ -12,8 +12,10 @@ declare -a PATTERNS_TO_FIND
 
 # edit this array
 PATTERNS_TO_FIND=(
-	'*_ONOFF_*'
-	'*WEBSERVER_*'
+	'_ONOFF_'
+	'WEBSERVER_'
+	'WIFI_WEBSERVER'
+	'Webserver'
 )
 
 HOSTS=(
@@ -35,10 +37,11 @@ cleanup() {
 	else
 		echo "$FAILED Interrupted. Cleaned up."
 	fi
+	trap - EXIT INT TERM TSTP
 	exit $exit_code
 }
 
-trap cleanup INT TERM
+trap 'cleanup' EXIT INT TERM TSTP
 
 ARCHIVED_DIRS=(
 	"_1buttonAndPingTest"
@@ -174,7 +177,7 @@ echo "${ARCHIVED_DIRS[@]}"
 for pattern in "${PATTERNS_TO_FIND[@]}"; do
 	NEW_DIRS=()
 	echo "searching pattern: $pattern"
-	readarray NEW_DIRS < <(find "$HOME/0_ARDUINO" -maxdepth 1 -type d -name "$pattern")
+	readarray NEW_DIRS < <(find "$HOME/0_ARDUINO" -maxdepth 1 -type d -name "*${pattern}*")
 
 	if [ "${#NEW_DIRS[@]}" -eq 0 ]; then
 		continue
@@ -195,19 +198,52 @@ done
 
 # local cleanup
 for dir in "${ARCHIVED_DIRS[@]}"; do
-	if [ -d ./$dir ]; then
+	if [[ -d "$HOME/0_ARDUINO/$dir" && ! -d "$HOME/0_ARDUINO/ARCHIVE/$dir" ]]; then
 
-		start_spinner "" "Archiving $dir on ${ACCENT_YELLOW}$host"
-		mv -f "$HOME/0_ARDUINO/$dir" "$HOME/0_ARDUINO/ARCHIVE/$dir" &>/dev/null &
+		echo -e "$RED" "Archiving ${CYAN}$dir to ${ACCENT_YELLOW}./ARCHIVE/" "$NC"
+
+		output=$(mv -f "$HOME/0_ARDUINO/$dir" "$HOME/0_ARDUINO/ARCHIVE/$dir")
+
+		echo -e "$output"
+
 	else
-		if [ -d ./ARCHIVE/$dir ]; then
+		if [[ -d "$HOME/0_ARDUINO/$dir" && -d "$HOME/0_ARDUINO/ARCHIVE/$dir" ]]; then
+			output=$(cp -r "$HOME/0_ARDUINO/$dir" "$HOME/0_ARDUINO/ARCHIVE/$dir")
+			echo "$output"
+			if [ -z "$output" ]; then
+				rm -r "$HOME/0_ARDUINO/$dir"
+				echo -e "${RED}$dir removed $CHECKED$NC"
+			fi
+		elif [ -d "$HOME/0_ARDUINO/ARCHIVE/$dir" ]; then
 			echo -e "${CYAN}$dir${GREEN} already in ./ARCHIVE $CHECKED$NC"
 		else
 			echo -e "$ERROR$BG_RED" "$dir is nowhere to be found... $FAILED$NC"
 		fi
 	fi
 done
+echo ""
 echo -e "$BG_GREEN Local removal $NC$CHECKED"
+echo ""
+echo -e "$FLASH_ACCENT_YELLOW"
+repeat_print "═"
+echo ""
+rsync -auz --info=progress2 --delete --exclude='*.git' ~/0_ARDUINO/ /mnt/h/OneDrive/Documents/Arduino/ &>/dev/null &
+</dev/null &
+echo "rsync --delete server in progress in the background"
+rsync -auz --info=progress2 --delete --exclude='*.git' ~/0_ARDUINO/ server:0_ARDUINO/ &>/dev/null &
+</dev/null &
+echo "rsync --delete dellserver in progress in the background"
+rsync -auz --info=progress2 --delete --exclude='*.git' ~/0_ARDUINO/ dellserver:0_ARDUINO/ &>/dev/null &
+</dev/null &
+echo "rsync --delete laptopwsl in progress in the background"
+rsync -auz --info=progress2 --delete --exclude='*.git' ~/0_ARDUINO/ laptopwsl:0_ARDUINO/ &>/dev/null &
+</dev/null &
+repeat_print "═"
+echo
+echo -e "$NC"
+
+echo "done $CHECKED"
+exit 0
 
 start_spinner 20 "Establishing ssh sockets..."
 for host in "${HOSTS[@]}"; do
