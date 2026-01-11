@@ -1,9 +1,0 @@
-void open()
-{
-  
-}
-
-void close()
-{
-  
-}
