@@ -25,7 +25,7 @@ Personal hobby projects built between 2018-2022, before formal software engineer
   - [Automated Cat Feeder](#automated-cat-feeder-esp32_cat_feeder_3)
   - [Adaptive Window Controller](#adaptive-window-controller-esp8266_window_living)
   - [Remote PC Power Control](#remote-pc-power-control-esp8266_computer_office)
-  - [Multi-MCU Robot Platform](#multi-mcu-robot-platform-mebo)
+  - [Autonomous Robot Platform](#autonomous-robot-platform-mebo)
 - [Technical Challenges](#technical-challenges)
 - [Other Projects](#other-projects)
 - [Architecture Patterns](#architecture-patterns)
@@ -198,59 +198,57 @@ graph LR
 
 ---
 
-### Multi-MCU Robot Platform (MEBO)
+### Autonomous Robot Platform (MEBO)
 
-**Problem:** Complex robot requiring real-time motor control AND web connectivity - single MCU can't handle both reliably.
+**Problem:** Complex robot requiring real-time motor control AND web connectivity - ESP32 alone lacked sufficient GPIO for all sensors.
 
-**Solution:** Distributed architecture with dedicated MCUs for sensors, motors, and network.
+**Solution:** ESP32 + ATmega2560 coordinated via custom UART string-based protocol built from scratch.
 
 ```mermaid
 graph TB
     subgraph "MEBO Robot Architecture"
-        subgraph "ESP32 - Network & Coordination"
+        subgraph "ESP32 - Network & Motor Control"
             WEBSERVER[Web Server<br/>Core 0]
-            ENCODER_TASK[Encoder Reading<br/>Core 1]
-            MOTOR_CMD[Motor Commands<br/>Core 1]
+            MOTOR_CTRL[Motor Control<br/>Core 1]
+            AUTONOMY[Autonomous<br/>Decision Engine]
         end
 
-        subgraph "ATmega2560 - Sensors"
-            IMU[IMU Sensor<br/>Orientation]
-            DISTANCE[Distance Sensors<br/>Obstacle Detection]
+        subgraph "ATmega2560 - Sensors & GPIO"
+            ULTRASONIC[Ultrasonic Array<br/>Obstacle Detection]
             CONTACT[Contact Sensors<br/>Collision]
-            DOCK[Docking Detection]
+            DOCK[Docking Station<br/>Detection]
+            EXTRA_GPIO[Additional GPIO<br/>for Sensors]
         end
 
-        subgraph "Communication"
-            I2C[I2C Bus<br/>Sensor Data]
-            UART[UART<br/>Commands]
+        subgraph "Custom UART Protocol"
+            UART[String-Based<br/>Serial Protocol<br/>Built from Scratch]
         end
 
         subgraph "Actuators"
-            MOTORS[DC Motors<br/>Encoders]
+            MOTORS[DC Motors<br/>with Encoders]
             SERVOS[Servos<br/>Arm/Camera]
         end
     end
 
-    WEBSERVER <--> UART
-    UART <--> IMU
-    UART <--> DISTANCE
-    ENCODER_TASK --> MOTORS
-    MOTOR_CMD --> MOTORS
-    IMU --> I2C
-    DISTANCE --> I2C
-    CONTACT --> I2C
-    DOCK --> I2C
+    ESP32 --- UART
+    UART --- ATmega2560
+    AUTONOMY --> MOTOR_CTRL
+    MOTOR_CTRL --> MOTORS
+    ULTRASONIC --> AUTONOMY
+    CONTACT --> AUTONOMY
+    DOCK --> AUTONOMY
 ```
 
 **Key Features:**
 
-- **Dual-core ESP32:** Web server on Core 0, real-time motor/encoder on Core 1
-- **ATmega2560 sensor hub:** Dedicated processor for sensor polling and filtering
-- **Multiple communication protocols:** I2C for sensors, UART for inter-MCU commands
-- **Self-drive autonomy:** Obstacle avoidance and docking station detection
-- **Archived variants:** Project includes evolution from single-MCU to distributed architecture
+- **Custom UART protocol:** String-based serial communication built from scratch for fast, reliable inter-processor coordination
+- **Encoder-based straight-line correction:** Motor encoders enable precise navigation - robot maintains true heading without drift
+- **Dual-core ESP32:** Web server on Core 0, real-time motor control on Core 1
+- **ATmega2560 for GPIO expansion:** Needed additional ports for ultrasonic sensor array
+- **Fully autonomous navigation:** Obstacle avoidance, docking station detection, no remote control needed
+- **Built entirely solo:** Hardware assembly, wiring, firmware, and protocol design - no kits or tutorials
 
-**Technologies:** ESP32, ATmega2560, I2C, UART, dual-core programming, encoder feedback control
+**Technologies:** ESP32, ATmega2560, custom UART protocol, encoder feedback, dual-core programming
 
 **Demo:** [Video of MEBO autonomous navigation](https://elfege.com/videos/mebo.mp4) (1:36) - Shows the robot undocking, navigating a living room, and avoiding obstacles with 100% autonomous decision-making.
 
