@@ -59,6 +59,7 @@ declare -a EXCLUDE_FILES=(
 	"$(basename "${BASH_SOURCE[0]}")"
 )
 
+#
 # build the grep excludes string
 GREP_EXCLUDES=""
 for dir in "${EXCLUDE_DIRS[@]}"; do
