@@ -1,5 +1,6 @@
 # Secrets files (contain WiFi passwords)
 **/secrets.h
+.cleanup_secrets
 
 .vscode
 .hubitat
