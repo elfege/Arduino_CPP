@@ -6,7 +6,7 @@
 #include <ESP8266WiFi.h>
 
 const char* ssid = WIFI_SSID;
-const char* password = PASSWORD;
+const char* password = WIFI_PASSWORD;
 
 int Step = 0; //GPIO0---D3 of Nodemcu--Step of stepper motor driver
 int Dir  = 2; //GPIO2---D4 of Nodemcu--Direction of stepper motor driver

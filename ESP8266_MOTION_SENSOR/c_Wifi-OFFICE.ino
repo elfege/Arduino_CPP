@@ -3,7 +3,7 @@
 //******************************************************************************************
 String str_ssid     = WIFI_SSID2;                           //  <---You must edit this line!
 String str_ssid2     = WIFI_SSID;                           //  <---You must edit this line!
-String str_password = PASSWORD;                   //  <---You must edit this line!
+String str_password = WIFI_PASSWORD;                   //  <---You must edit this line!
 IPAddress iptoping (192, 168, 10, 2);   // The remote ip to ping
 IPAddress ip(192, 168, 10, 225);       // Device IP Address      //  <---You must edit this line!
 IPAddress gateway(192, 168, 10, 1);    //router gateway          //  <---You must edit this line!

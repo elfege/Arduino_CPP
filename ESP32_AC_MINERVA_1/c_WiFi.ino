@@ -6,7 +6,7 @@
 //******************************************************************************************
 String str_ssid     = WIFI_SSID;                         
 String str_ssid2     = WIFI_SSID2;  
-String str_password = PASSWORD;  
+String str_password = WIFI_PASSWORD;  
 
 IPAddress ip(192, 168, 10, 213);       // Device IP Address      //  <---You must edit this line!
 IPAddress gateway(192, 168, 10, 1);    //router gateway          //  <---You must edit this line!

@@ -2,7 +2,7 @@
 //ESP8266 WiFi Information    CHANGE THIS INFORMATION ACCORDINGLY FOR YOUR NETWORK!
 //******************************************************************************************
 String str_ssid     = WIFI_SSID;                           //  <---You must edit this line!
-String str_password = PASSWORD;                   //  <---You must edit this line!
+String str_password = WIFI_PASSWORD;                   //  <---You must edit this line!
 String str_ssid2     = WIFI_SSID2;                           //  <---You must edit this line!
 IPAddress ip(192, 168, 10, 211);       // Device IP Address      //  <---You must edit this line!
 IPAddress gateway(192, 168, 10, 1);    //router gateway          //  <---You must edit this line!

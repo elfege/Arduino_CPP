@@ -10,7 +10,7 @@ SoftwareSerial Serial2(17, 16); // RX, TX
 
 
 char ssida[] = WIFI_SSID2;            // your network SSID (name)
-char passa[] = PASSWORD;      // your network password
+char passa[] = WIFI_PASSWORD;      // your network password
 
 int ledStatus = LOW;
 int status = WL_IDLE_STATUS;

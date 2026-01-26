@@ -6,7 +6,7 @@
 //******************************************************************************************
 String str_ssid     = WIFI_SSID;                           // SSID - set in secrets.h
 String str_ssid2     = WIFI_SSID2;                           // SSID2 - set in secrets.h
-String str_password = PASSWORD;                   // password - set in secrets.h
+String str_password = WIFI_PASSWORD;                   // password - set in secrets.h
 IPAddress iptoping (192, 168, 10, 2);   // The remote ip to ping
 IPAddress ip(192, 168, 10, 231);       // Device IP Address      //  <---You must edit this line!
 IPAddress gateway(192, 168, 10, 1);    //router gateway          //  <---You must edit this line!

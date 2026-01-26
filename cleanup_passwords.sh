@@ -1,8 +1,10 @@
 #!/bin/bash
+set +H  # Disable history expansion to handle ! in patterns
 
 clear
 
 . ~/.bash_utils --no-exec &>/dev/null
+
 cleanup() {
 	stop_spinner
 	trap - EXIT INT TSTP ERR
@@ -10,12 +12,19 @@ cleanup() {
 }
 trap 'cleanup' EXIT INT TSTP ERR
 
-export PATH=${1:-"$HOME/0_ARDUINO"}
-export PATTERN_1="${2:-'(WIFI_PASSWORD|PASSWORD|PASSWORD|5HUBITAT_API_KEY)'}"
-export PATTERN_2="${3:-'WIFI_SSID'}"
-export PATTERN_3="${4:-'WIFI_SSID2'}"
+export SEARCH_PATH=${1:-"$HOME/0_ARDUINO"}
 
-# Directories to exclude (grep format)
+# Associative array: DEFINE_NAME => "search_pattern"
+# The key is used as both the replacement text and the #define name in secrets.h
+declare -A CREDENTIALS=(
+	["WIFI_PASSWORD"]="WIFI_PASSWORD"
+	["PASSWORD"]="(PASSWORD|PASSWORD)"
+	["HUBITAT_API_KEY"]="HUBITAT_API_KEY"
+	["WIFI_SSID"]="WIFI_SSID"
+	["WIFI_SSID2"]="WIFI_SSID2"
+)
+
+# Directories to exclude
 declare -a EXCLUDE_DIRS=(
 	".git"
 	".cache"
@@ -37,9 +46,10 @@ declare -a EXCLUDE_DIRS=(
 	"tmp"
 	"var"
 	"usr"
+	"build"
 )
 
-# Files to exclude (grep format)
+# Files to exclude
 declare -a EXCLUDE_FILES=(
 	"secrets.h"
 	"cleanup_passwords.sh"
@@ -59,14 +69,13 @@ declare -a EXCLUDE_FILES=(
 	"$(basename "${BASH_SOURCE[0]}")"
 )
 
-#
-# build the grep excludes string
-GREP_EXCLUDES=""
+# Build grep exclude arguments
+GREP_EXCLUDES=()
 for dir in "${EXCLUDE_DIRS[@]}"; do
-	GREP_EXCLUDES+=("--exclude-dir=$dir ")
+	GREP_EXCLUDES+=("--exclude-dir=$dir")
 done
 for file in "${EXCLUDE_FILES[@]}"; do
-	GREP_EXCLUDES+=("--exclude=$file ")
+	GREP_EXCLUDES+=("--exclude=$file")
 done
 export GREP_EXCLUDES
 
@@ -76,99 +85,115 @@ for item in "${GREP_EXCLUDES[@]}"; do
 	echo -e "${clean} ${RED} pattern will be EXCLUDED $NC"
 done
 
-GREP_COMMAND_PWD=(grep -rlE \'${PATTERN_1}\' "$PATH" "${GREP_EXCLUDES[@]}")
-GREP_COMMNAD_SSID1=(grep -rlE \'${PATTERN_2}\' "$PATH" "${GREP_EXCLUDES[@]}")
-GREP_COMMAND_SSID2=(grep -rlE \'${PATTERN_3}\' "$PATH" "${GREP_EXCLUDES[@]}")
+# Function to ensure secrets.h exists and contains the required define
+# Arguments: $1 = directory path, $2 = define_name, $3 = original_value
+ensure_secrets_h() {
+	local dir="$1"
+	local define_name="$2"
+	local original_value="$3"
+	local secrets_file="$dir/secrets.h"
+	local dir_name=$(basename "$dir")
+	local guard_name="${dir_name^^}_SECRETS_H"
+	# Sanitize guard name: replace non-alphanumeric with underscore
+	guard_name=$(echo "$guard_name" | sed 's/[^A-Z0-9_]/_/g')
 
-# echo "GREP_COMMAND_PWD=${GREP_COMMAND_PWD[@]}"
-# echo "GREP_COMMNAD_SSID1=${GREP_COMMNAD_SSID1[@]}"
-# echo "GREP_COMMAND_SSID2=${GREP_COMMAND_SSID2[@]}"
+	# Create secrets.h if it doesn't exist
+	if [[ ! -f "$secrets_file" ]]; then
+		echo -e "${YELLOW}Creating $secrets_file${NC}"
+		cat > "$secrets_file" << EOF
+#ifndef ${guard_name}
+#define ${guard_name}
 
-repeat_print "═"
-echo -e "${ACCENT_YELLOW}Looking for files containing password patterns"
-readarray -t FILES_WITH_PASSWORD < <(eval "${GREP_COMMAND_PWD[@]}")
-repeat_print "═"
-echo -e "${ACCENT_YELLOW}Looking for files containing $PATTERN_2"
-readarray -t FILES_WITH_SSID_1 < <(eval "${GREP_COMMNAD_SSID1[@]}")
-repeat_print "═"
-echo -e "${ACCENT_YELLOW}Looking for files containing $PATTERN_3"
-readarray -t FILES_WITH_SSID_2 < <(eval "${GREP_COMMAND_SSID2[@]}")
+// WiFi credentials and sensitive data
+// This file should NOT be committed to git
 
-echo
-echo "Found ${#FILES_WITH_PASSWORD[@]} files with password pattern."
-echo
-echo "Found ${#FILES_WITH_SSID_1[@]} files with ssid 1 pattern."
-echo
-echo "Found ${#FILES_WITH_SSID_2[@]} files with ssid 2 pattern."
-echo
+#endif // ${guard_name}
+EOF
+	fi
 
-if [ "${#FILES_WITH_PASSWORD[@]}" -ne 0 ]; then
-	echo
+	# Check if the define already exists in secrets.h
+	if ! grep -q "^#define ${define_name}" "$secrets_file"; then
+		echo -e "${GREEN}Adding #define ${define_name} to $secrets_file${NC}"
+		# Insert the define before the #endif line
+		sed -i "/#endif/i #define ${define_name} \"${original_value}\"" "$secrets_file"
+	else
+		echo -e "${CYAN}#define ${define_name} already exists in $secrets_file${NC}"
+	fi
+
+	# Ensure secrets.h is in .gitignore for this directory
+	local gitignore_file="$dir/.gitignore"
+	if [[ ! -f "$gitignore_file" ]] || ! grep -q "^secrets\.h$" "$gitignore_file"; then
+		echo "secrets.h" >> "$gitignore_file"
+		echo -e "${YELLOW}Added secrets.h to $gitignore_file${NC}"
+	fi
+}
+
+# Function to process files for a given credential
+# Arguments: $1 = define_name (also used as replacement), $2 = pattern
+process_credential() {
+	local define_name="$1"
+	local pattern="$2"
+
 	repeat_print "═"
-	echo -e "${ACCENT_YELLOW}files with password pattern. $NC"
-	repeat_print "═"
-	for file in "${FILES_WITH_PASSWORD[@]}"; do
-		echo "- $file"
+	echo -e "${ACCENT_YELLOW}Looking for: ${define_name} (pattern: ${pattern})${NC}"
+
+	# Find files matching the pattern
+	local grep_cmd="grep -rlE '${pattern}' \"$SEARCH_PATH\" ${GREP_EXCLUDES[*]}"
+	readarray -t matching_files < <(eval "$grep_cmd" 2>/dev/null)
+
+	echo "Found ${#matching_files[@]} files"
+
+	if [[ ${#matching_files[@]} -eq 0 ]]; then
+		return 0
+	fi
+
+	# List found files
+	for file in "${matching_files[@]}"; do
+		echo "  - $file"
 	done
-fi
-
-if [ "${#FILES_WITH_SSID_1[@]}" -ne 0 ]; then
 	echo
-	repeat_print "═"
-	echo -e "${ACCENT_YELLOW}files with ssid 1 pattern. $NC"
-	repeat_print "═"
-	for file in "${FILES_WITH_SSID_1[@]}"; do
-		echo "- $file"
+
+	# Process each file
+	for file in "${matching_files[@]}"; do
+		local filename=$(basename "$file")
+		local dir=$(dirname "$file")
+
+		# Extract the actual sensitive value from the file before redacting
+		local original_value
+		original_value=$(grep -oE "${pattern}" "$file" | head -1)
+
+		if [[ -n "$original_value" ]]; then
+			# Ensure secrets.h exists and contains the define
+			ensure_secrets_h "$dir" "$define_name" "$original_value"
+		fi
+
+		# Remove from git cache
+		echo "Removing $filename from git cache"
+		git rm --cached "$file" &>/dev/null
+
+		# Redact the sensitive data (replace pattern with define name)
+		echo -e "${YELLOW}Redacting ${define_name} in $file${NC}"
+		sed -i -E "s/${pattern}/${define_name}/g" "$file"
+
+		# Backup to archive
+		cp "$file" "/mnt/h/OneDrive/Documents/Arduino/ARCHIVE/$(basename "$file")" 2>/dev/null &
 	done
-	echo
-fi
 
-if [ "${#FILES_WITH_SSID_2[@]}" -ne 0 ]; then
 	echo
-	repeat_print "═"
-	echo -e "${ACCENT_YELLOW}files with ssid 2 pattern. $NC"
-	repeat_print "═"
-	for file in "${FILES_WITH_SSID_2[@]}"; do
-		echo "- $file"
-	done
-fi
+}
 
-for file in "${FILES_WITH_PASSWORD[@]}"; do
-	# echo "- $file"
-	filename="$(basename "$file")"
-	# removing from git cache
-	echo "removing $filename from git cache"
-	git rm --cached "$file" &>/dev/null
-	echo "Redacting password in $file"
-	sed -i -E "s/${PATTERN_1}/PASSWORD/g" "$file" # &>/dev/null
-	cp "$file" /mnt/h/OneDrive/Documents/Arduino/ARCHIVE/$(basename "$file") &
+# Main execution
+repeat_print "═"
+echo -e "${ACCENT_YELLOW}Starting credential cleanup${NC}"
+repeat_print "═"
+echo
+
+# Process each credential
+for define_name in "${!CREDENTIALS[@]}"; do
+	pattern="${CREDENTIALS[$define_name]}"
+	process_credential "$define_name" "$pattern"
 done
 
-for file in "${FILES_WITH_SSID_1[@]}"; do
-	# echo "- $file"
-	filename="$(basename "$file")"
-	# removing from git cache
-	echo "removing $filename from git cache"
-	git rm --cached "$file" &>/dev/null
-	# start_spinner 120 "Redacting password in $filename"
-	echo "Redacting password in $file"
-	sed -i -E "s/${PATTERN_2}/WIFI_SSID/g" "$file" # &>/dev/null
-	cp "$file" /mnt/h/OneDrive/Documents/Arduino/ARCHIVE/$(basename "$file") &
-done
-
-for file in "${FILES_WITH_SSID_2[@]}"; do
-	# echo "- $file"
-	filename="$(basename "$file")"
-	# removing from git cache
-	echo "removing $filename from git cache"
-	git rm --cached "$file" &>/dev/null
-	# start_spinner 120 "Redacting password in $filename"
-	echo "Redacting password in $file"
-	sed -i -E "s/${PATTERN_3}/WIFI_SSID2/g" "$file" # &>/dev/null
-	cp "$file" /mnt/h/OneDrive/Documents/Arduino/ARCHIVE/$(basename "$file") &
-done
-
-wait 
-
-# ensure all git changes are staged
-git add .
+repeat_print "═"
+echo -e "${GREEN}Cleanup complete${NC}"
+repeat_print "═"
