@@ -11,6 +11,7 @@ SmartThingsCallout_t messageCallout;
 
 #include <ESP8266Ping.h>
 
+#include "secrets.h"
 
 #include "Arduino.h"
 #include <Streaming.h>      // Ref: http://arduiniana.org/libraries/streaming/ // not compatible under ESP32 hardware Serial

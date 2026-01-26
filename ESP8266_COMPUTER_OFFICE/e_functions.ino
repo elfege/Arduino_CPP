@@ -17,7 +17,6 @@ void on()
   update_state();
 
   OnOffRunning = false;
-  
 }
 
 void off()
@@ -91,6 +90,12 @@ void getPowerStateOnly()
 
 void toggle_power()
 {
+  if (OnOffRunning)
+  {
+    term.println("Operation already in progress - ignoring");
+    return; // Prevent multiple triggers
+  }
+  OnOffRunning = true; // Set immediately to prevent race condition
   if (is_on())
   {
     STOP = true; // in case while() loop is running
@@ -167,19 +172,17 @@ boolean is_on()
 
 void send_data(String var)
 {
-  
+
   new_state = last_state == "off" && var == "on" || last_state == "on" && var == "off";
 
-  //refresh state every minute or if it changed
+  // refresh state every minute or if it changed
   if (millis() - last_message_sent_millis >= 60000 || new_state)
   {
     term.println("sending " + var + " to the hub");
     smartthing.send(var); // send the current value to smartthings
     last_message_sent_millis = millis();
   }
-
 }
-
 
 void getMac()
 {

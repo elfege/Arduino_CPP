@@ -11,7 +11,7 @@ cleanup() {
 trap 'cleanup' EXIT INT TSTP ERR
 
 export PATH=${1:-"$HOME/0_ARDUINO"}
-export PATTERN_1="${2:-'(WIFI_PASSWORD|PASSWORD|PASSWORD)'}"
+export PATTERN_1="${2:-'(WIFI_PASSWORD|PASSWORD|PASSWORD|5HUBITAT_API_KEY)'}"
 export PATTERN_2="${3:-'WIFI_SSID'}"
 export PATTERN_3="${4:-'WIFI_SSID2'}"
 
@@ -136,7 +136,9 @@ fi
 for file in "${FILES_WITH_PASSWORD[@]}"; do
 	# echo "- $file"
 	filename="$(basename "$file")"
-	# start_spinner 120 "Redacting password in $filename"
+	# removing from git cache
+	echo "removing $filename from git cache"
+	git rm --cached "$file" &>/dev/null
 	echo "Redacting password in $file"
 	sed -i -E "s/${PATTERN_1}/PASSWORD/g" "$file" # &>/dev/null
 	cp "$file" /mnt/h/OneDrive/Documents/Arduino/ARCHIVE/$(basename "$file") &
@@ -145,6 +147,9 @@ done
 for file in "${FILES_WITH_SSID_1[@]}"; do
 	# echo "- $file"
 	filename="$(basename "$file")"
+	# removing from git cache
+	echo "removing $filename from git cache"
+	git rm --cached "$file" &>/dev/null
 	# start_spinner 120 "Redacting password in $filename"
 	echo "Redacting password in $file"
 	sed -i -E "s/${PATTERN_2}/WIFI_SSID/g" "$file" # &>/dev/null
@@ -154,8 +159,16 @@ done
 for file in "${FILES_WITH_SSID_2[@]}"; do
 	# echo "- $file"
 	filename="$(basename "$file")"
+	# removing from git cache
+	echo "removing $filename from git cache"
+	git rm --cached "$file" &>/dev/null
 	# start_spinner 120 "Redacting password in $filename"
 	echo "Redacting password in $file"
 	sed -i -E "s/${PATTERN_3}/WIFI_SSID2/g" "$file" # &>/dev/null
 	cp "$file" /mnt/h/OneDrive/Documents/Arduino/ARCHIVE/$(basename "$file") &
 done
+
+wait 
+
+# ensure all git changes are staged
+git add .

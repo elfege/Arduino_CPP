@@ -97,7 +97,7 @@ const char MAIN_page[] PROGMEM = R"=====(
             MainFunc("/overrideCheck", "override");
             MainFunc("/shutdownbool", "shutdownbool");
             MainFunc("/nosleepcheck", "nosleep");
-            const interval1 = setInterval(() => getpowerstate(), 500);
+            const interval1 = setInterval(() => getpowerstate(), 2000);
             const interval2 = setInterval(() => getDebug(), 1000);
             const interval3 = setInterval(() => getTimeInfo(), 5000);
             const interval4 = setInterval(() => MainFunc("/overrideCheck", "override"), 5000);

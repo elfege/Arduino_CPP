@@ -1,0 +1,30 @@
+/home/elfege/0_ARDUINO/build/core/umm_malloc/umm_malloc.cpp.o: \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/umm_malloc.cpp \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/CommonHFile.h \
+ /home/elfege/0_ARDUINO/build/core/ESP8266_COMPUTER_OFFICE.ino.globals.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/Notes.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/umm_malloc_cfg.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/umm_malloc_cfgport.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/pgmspace.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/tools/sdk/include/ets_sys.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/tools/sdk/include/c_types.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/tools/sdk/include/eagle_soc.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/tools/sdk/include/osapi.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/user_config.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/mmu_iram.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/tools/sdk/include/c_types.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/esp8266_undocumented.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/tools/sdk/include/eagle_soc.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/tools/sdk/include/spi_flash.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/tools/sdk/include/spi_flash_geometry.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/../debug.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/../esp8266_undocumented.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/core_esp8266_features.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/umm_malloc.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/heap_api_debug.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/dbglog/dbglog.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/umm_local.h \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/umm_integrity.c \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/umm_poison.c \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/umm_info.c \
+ /home/elfege/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/umm_malloc/umm_local.c

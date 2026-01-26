@@ -7,7 +7,11 @@ void initXMLhttp() {
 
   _server.on("/power", getPowerState);              // toggles
   _server.on("/getpowerstate", getPowerStateOnly);  // doesn't toggle, just refreshes
-  _server.on("/togglepower", toggle_power);
+  _server.on("/togglepower", []() {
+    toggle_power();
+    String state = is_on() ? "computer running" : "computer sleeping";
+    _server.send(200, "text/plain", state);
+  });
   _server.on("/on", on);
   _server.on("/off", off);
   _server.on("/hard_reboot", hard_reboot);

@@ -1,18 +1,16 @@
 void loop()
 {
+  ArduinoOTA.handle();
   if (!StopAll)
   {
     master();
-  }
-  else
-  {
-    ArduinoOTA.handle(); // also handled by smartthings ESP8266 library
-  }
-  if (millis() - millisHeartBit >= 1000)
-  {
-    //    term.println("state = "+last_state);
-    millisHeartBit = millis();
-    digitalWrite(LED, !digitalRead(LED));
+
+    if (millis() - millisHeartBit >= 1000)
+    {
+      //    term.println("state = "+last_state);
+      millisHeartBit = millis();
+      digitalWrite(LED, !digitalRead(LED));
+    }
   }
   yield();
   delay(10);
