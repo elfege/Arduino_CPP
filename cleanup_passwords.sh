@@ -28,15 +28,43 @@ REWRITE_GIT_HISTORY=false
 # If false, you'll need to manually run: git push --force --all
 AUTO_FORCE_PUSH=false
 
-# Associative array: DEFINE_NAME => "search_pattern"
-# The key is used as both the replacement text and the #define name in secrets.h
-declare -A CREDENTIALS=(
-	["WIFI_PASSWORD"]="WIFI_PASSWORD"
-	["PASSWORD"]="(PASSWORD|PASSWORD)"
-	["HUBITAT_API_KEY"]="HUBITAT_API_KEY"
-	["WIFI_SSID"]="WIFI_SSID"
-	["WIFI_SSID2"]="WIFI_SSID2"
-)
+# ============================================================================
+# CREDENTIALS - Loaded from external file (NOT committed to git)
+# ============================================================================
+# Format: DEFINE_NAME => "actual_secret_pattern"
+# The key becomes the replacement text and #define name in secrets.h
+#
+# Create ~/.cleanup_secrets with:
+#   declare -A CREDENTIALS=(
+#       ["WIFI_PASSWORD"]="YourActualWifiPassword"
+#       ["PASSWORD"]="(OtherPassword1|OtherPassword2)"
+#       ["HUBITAT_API_KEY"]="your-actual-api-key-here"
+#       ["WIFI_SSID"]="YourSSID"
+#       ["WIFI_SSID2"]="YourSecondSSID"
+#   )
+
+SECRETS_FILE="$HOME/.cleanup_secrets"
+
+if [[ ! -f "$SECRETS_FILE" ]]; then
+	echo -e "${RED}ERROR: Secrets file not found: $SECRETS_FILE${NC}"
+	echo -e "${YELLOW}Create it with your actual credentials:${NC}"
+	echo -e "${CYAN}  declare -A CREDENTIALS=(${NC}"
+	echo -e "${CYAN}      [\"WIFI_PASSWORD\"]=\"YourActualPassword\"${NC}"
+	echo -e "${CYAN}      [\"WIFI_SSID\"]=\"YourSSID\"${NC}"
+	echo -e "${CYAN}      # ... etc${NC}"
+	echo -e "${CYAN}  )${NC}"
+	exit 1
+fi
+
+# Source the credentials from external file
+source "$SECRETS_FILE"
+
+if [[ ${#CREDENTIALS[@]} -eq 0 ]]; then
+	echo -e "${RED}ERROR: CREDENTIALS array is empty after sourcing $SECRETS_FILE${NC}"
+	exit 1
+fi
+
+echo -e "${GREEN}Loaded ${#CREDENTIALS[@]} credentials from $SECRETS_FILE${NC}"
 
 # Directories to exclude
 declare -a EXCLUDE_DIRS=(
@@ -148,6 +176,12 @@ process_credential() {
 	local define_name="$1"
 	local pattern="$2"
 
+	# Skip if pattern equals define_name (already redacted or misconfigured)
+	if [[ "$pattern" == "$define_name" ]]; then
+		echo -e "${CYAN}Skipping $define_name (pattern equals replacement - check $SECRETS_FILE)${NC}"
+		return 0
+	fi
+
 	repeat_print "═"
 	echo -e "${ACCENT_YELLOW}Looking for: ${define_name} (pattern: ${pattern})${NC}"
 
@@ -169,6 +203,12 @@ process_credential() {
 
 	# Process each file
 	for file in "${matching_files[@]}"; do
+		# Skip the secrets file itself
+		if [[ "$file" == "$SECRETS_FILE" ]]; then
+			echo -e "${CYAN}Skipping secrets file: $file${NC}"
+			continue
+		fi
+
 		local filename=$(basename "$file")
 		local dir=$(dirname "$file")
 
