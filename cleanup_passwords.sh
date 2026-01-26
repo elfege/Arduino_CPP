@@ -277,12 +277,26 @@ rewrite_git_history() {
 	git branch "$backup_branch" 2>/dev/null
 	echo -e "${GREEN}Created backup branch: $backup_branch${NC}"
 
+	# Save remote URL before filter-repo (it removes remotes as a safety feature)
+	local remote_url
+	remote_url=$(git remote get-url origin 2>/dev/null)
+	if [[ -n "$remote_url" ]]; then
+		echo -e "${CYAN}Saving remote URL: $remote_url${NC}"
+	fi
+
 	# Run git-filter-repo
 	echo -e "${YELLOW}Rewriting git history...${NC}"
 	git filter-repo --replace-text "$replace_file" --force
 
 	# Clean up
 	rm -f "$replace_file"
+
+	# Restore remote URL (filter-repo removes it intentionally)
+	if [[ -n "$remote_url" ]]; then
+		echo -e "${YELLOW}Restoring remote origin...${NC}"
+		git remote add origin "$remote_url"
+		echo -e "${GREEN}Remote restored: $remote_url${NC}"
+	fi
 
 	echo -e "${GREEN}Git history rewrite complete.${NC}"
 	echo
