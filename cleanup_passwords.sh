@@ -14,6 +14,20 @@ trap 'cleanup' EXIT INT TSTP ERR
 
 export SEARCH_PATH=${1:-"$HOME/0_ARDUINO"}
 
+# ============================================================================
+# GIT HISTORY REWRITE CONFIGURATION
+# ============================================================================
+# Set to true to enable git history rewriting (removes secrets from ALL commits)
+# WARNING: This is DESTRUCTIVE and rewrites git history!
+# - All collaborators will need to re-clone the repo
+# - Requires force push to remote
+# - Cannot be undone once pushed
+REWRITE_GIT_HISTORY=false
+
+# Set to true to automatically force push after history rewrite
+# If false, you'll need to manually run: git push --force --all
+AUTO_FORCE_PUSH=false
+
 # Associative array: DEFINE_NAME => "search_pattern"
 # The key is used as both the replacement text and the #define name in secrets.h
 declare -A CREDENTIALS=(
@@ -195,5 +209,113 @@ for define_name in "${!CREDENTIALS[@]}"; do
 done
 
 repeat_print "═"
-echo -e "${GREEN}Cleanup complete${NC}"
+echo -e "${GREEN}File cleanup complete${NC}"
+repeat_print "═"
+
+# ============================================================================
+# GIT HISTORY REWRITE (optional)
+# ============================================================================
+rewrite_git_history() {
+	echo
+	repeat_print "═"
+	echo -e "${RED}WARNING: GIT HISTORY REWRITE${NC}"
+	repeat_print "═"
+	echo -e "${YELLOW}This will PERMANENTLY remove secrets from ALL git history.${NC}"
+	echo -e "${YELLOW}This action:${NC}"
+	echo -e "${YELLOW}  - Rewrites ALL commits in the repository${NC}"
+	echo -e "${YELLOW}  - Requires force push to remote (--force)${NC}"
+	echo -e "${YELLOW}  - Will break all existing clones (collaborators must re-clone)${NC}"
+	echo -e "${YELLOW}  - CANNOT BE UNDONE once pushed to remote${NC}"
+	echo
+	echo -e "${CYAN}Patterns to be removed from history:${NC}"
+	for define_name in "${!CREDENTIALS[@]}"; do
+		echo -e "  - ${define_name}: ${CREDENTIALS[$define_name]}"
+	done
+	echo
+
+	# Prompt for confirmation
+	read -p "Are you sure you want to rewrite git history? (type 'YES' to confirm): " confirm
+	if [[ "$confirm" != "YES" ]]; then
+		echo -e "${GREEN}Git history rewrite cancelled.${NC}"
+		return 0
+	fi
+
+	# Check if git-filter-repo is installed
+	if ! command -v git-filter-repo &>/dev/null; then
+		echo -e "${YELLOW}git-filter-repo not found. Installing...${NC}"
+		pip install git-filter-repo || {
+			echo -e "${RED}Failed to install git-filter-repo. Please install manually:${NC}"
+			echo -e "${YELLOW}  pip install git-filter-repo${NC}"
+			return 1
+		}
+	fi
+
+	# Change to repo directory
+	cd "$SEARCH_PATH" || return 1
+
+	# Create replacement file for git-filter-repo
+	local replace_file=$(mktemp)
+	for define_name in "${!CREDENTIALS[@]}"; do
+		pattern="${CREDENTIALS[$define_name]}"
+		# For regex patterns, we need to handle them differently
+		# git-filter-repo uses literal strings by default
+		# Remove regex grouping for literal replacement
+		clean_pattern=$(echo "$pattern" | sed 's/[()]//g' | sed 's/|/\n/g')
+		while IFS= read -r p; do
+			if [[ -n "$p" ]]; then
+				echo "${p}==>${define_name}" >> "$replace_file"
+			fi
+		done <<< "$clean_pattern"
+	done
+
+	echo -e "${YELLOW}Replacement patterns:${NC}"
+	cat "$replace_file"
+	echo
+
+	# Create a backup branch before rewriting
+	local backup_branch="backup-before-history-rewrite-$(date +%Y%m%d_%H%M%S)"
+	git branch "$backup_branch" 2>/dev/null
+	echo -e "${GREEN}Created backup branch: $backup_branch${NC}"
+
+	# Run git-filter-repo
+	echo -e "${YELLOW}Rewriting git history...${NC}"
+	git filter-repo --replace-text "$replace_file" --force
+
+	# Clean up
+	rm -f "$replace_file"
+
+	echo -e "${GREEN}Git history rewrite complete.${NC}"
+	echo
+
+	# Force push if enabled
+	if [[ "$AUTO_FORCE_PUSH" == "true" ]]; then
+		echo -e "${YELLOW}Force pushing to remote...${NC}"
+		read -p "Confirm force push to remote? (type 'PUSH' to confirm): " push_confirm
+		if [[ "$push_confirm" == "PUSH" ]]; then
+			git push --force --all
+			git push --force --tags
+			echo -e "${GREEN}Force push complete.${NC}"
+		else
+			echo -e "${YELLOW}Force push cancelled. Run manually:${NC}"
+			echo -e "${CYAN}  git push --force --all${NC}"
+			echo -e "${CYAN}  git push --force --tags${NC}"
+		fi
+	else
+		echo -e "${YELLOW}To push changes to remote, run:${NC}"
+		echo -e "${CYAN}  git push --force --all${NC}"
+		echo -e "${CYAN}  git push --force --tags${NC}"
+	fi
+}
+
+# Execute git history rewrite if enabled
+if [[ "$REWRITE_GIT_HISTORY" == "true" ]]; then
+	rewrite_git_history
+else
+	echo
+	echo -e "${CYAN}Note: Git history still contains old secrets.${NC}"
+	echo -e "${CYAN}To remove from history, set REWRITE_GIT_HISTORY=true and re-run.${NC}"
+fi
+
+repeat_print "═"
+echo -e "${GREEN}All operations complete${NC}"
 repeat_print "═"
