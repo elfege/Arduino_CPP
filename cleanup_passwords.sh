@@ -162,12 +162,7 @@ EOF
 		echo -e "${CYAN}#define ${define_name} already exists in $secrets_file${NC}"
 	fi
 
-	# Ensure secrets.h is in .gitignore for this directory
-	local gitignore_file="$dir/.gitignore"
-	if [[ ! -f "$gitignore_file" ]] || ! grep -q "^secrets\.h$" "$gitignore_file"; then
-		echo "secrets.h" >> "$gitignore_file"
-		echo -e "${YELLOW}Added secrets.h to $gitignore_file${NC}"
-	fi
+	# Note: secrets.h is handled by root .gitignore with **/secrets.h
 }
 
 # Function to process files for a given credential
